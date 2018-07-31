@@ -395,13 +395,13 @@ static inline VALUE rb_vector2_multiply_s(VALUE klass, VALUE vec, VALUE other) {
         Vector2 *v2;
         Data_Get_Struct(other, Vector2, v2);
         result->x = v1->x * v2->x;
-        result->y = v1->x * v2->y;
+        result->y = v1->y * v2->y;
     }
     else
     {
         float scalar = NUM2FLT(other);
         result->x = v1->x * scalar;
-        result->y = v1->x * scalar;
+        result->y = v1->y * scalar;
     }
     return NUMERIX_WRAP(klass, result);
 }
@@ -416,13 +416,13 @@ static inline VALUE rb_vector2_divide_s(VALUE klass, VALUE vec, VALUE other) {
         Vector2 *v2;
         Data_Get_Struct(other, Vector2, v2);
         result->x = v1->x / v2->x;
-        result->y = v1->x / v2->y;
+        result->y = v1->y / v2->y;
     }
     else
     {
         float scalar = 1.0f / NUM2FLT(other);
         result->x = v1->x * scalar;
-        result->y = v1->x * scalar;
+        result->y = v1->y * scalar;
     }
     return NUMERIX_WRAP(klass, result);
 }

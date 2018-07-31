@@ -6,29 +6,29 @@
 - one? zero?  one zero
 
 
-
-///// VECTOR2 ///////////////////////////////////////////////
-// TODO: Make instance methods
-// one?
-// zero?
-// angle (?)
-// distance
-// ditance_squared
-// normalize
-// normalize!
-// reflect
-// reflect!
-// clamp (mine allows float values also, not just other vectors)
-// clamp! (mine allows float values also, not just other vectors)
-// lerp
-// lerp!
-// transform
-// transform!
-// min_value (component)
-// max_value (component)
-// min(other)
-// max(other)
-// abs
-// sqrt
-// dot
-// to_a, to_h, to_vec3, to_vec4
+/////////////// VECTOR INSTANCE METHODS //////////////////////////////
+one?
+zero?
+angle (?)
+distance
+ditance_squared
+normalize
+normalize!
+reflect
+reflect!
+clamp (mine allows float values also, not just other vectors)
+clamp! (mine allows float values also, not just other vectors)
+lerp
+lerp!
+transform
+transform!
+min_value (component)
+max_value (component)
+min(other)
+max(other)
+abs
+sqrt
+dot
+to_a, to_h, to_vec3, to_vec4
+cross, cross!
+//////////////////////////////////////////////////////////////////////////

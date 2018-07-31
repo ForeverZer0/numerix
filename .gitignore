@@ -11,5 +11,6 @@
 *.o
 *.a
 /.vscode
-/.idea/*
+.idea
+*.cs
 mkmf.log
