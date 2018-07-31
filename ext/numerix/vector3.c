@@ -100,7 +100,7 @@ VALUE rb_vector3_initialize(int argc, VALUE *argv, VALUE self) {
             break;
         }
         default:
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 1, 2)", argc);
+            rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 1, 2, 3)", argc);
             break;
 
     }
