@@ -10,4 +10,6 @@
 *.so
 *.o
 *.a
+/.vscode
+/.idea/*
 mkmf.log

@@ -1,5 +1,5 @@
-require "numerix/version"
-require "numerix/numerix"
+require_relative 'numerix/version'
+require_relative 'numerix/numerix'
 
 module Numerix
   # Your code goes here...
