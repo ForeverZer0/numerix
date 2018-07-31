@@ -16,6 +16,8 @@
 #define NUM2FLT(value) ((float) rb_num2dbl(value))
 #define NUMERIX_WRAP(klass, ptr) Data_Wrap_Struct(klass, NULL, RUBY_DEFAULT_FREE, ptr)
 
+#define CLASS_NAME(obj) rb_class2name(CLASS_OF(obj))
+
 typedef struct Vector2 {
     float x; /* The X component of the vector. */
     float y; /* The Y component of the vector. */
