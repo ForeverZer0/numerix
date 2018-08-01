@@ -5,12 +5,14 @@ VALUE rb_cVectorBase;
 VALUE rb_cVector2;
 VALUE rb_cVector3;
 VALUE rb_cVector4;
+VALUE rb_cQuaternion;
 
 void Init_vector_base(VALUE outer) {
     rb_cVectorBase = rb_define_class_under(outer, "VectorBase", rb_cNumerixStruct);
     rb_cVector2 = rb_define_class_under(outer, "Vector2", rb_cVectorBase);
     rb_cVector3 = rb_define_class_under(outer, "Vector3", rb_cVectorBase);
     rb_cVector4 = rb_define_class_under(outer, "Vector4", rb_cVectorBase);
+    rb_cQuaternion = rb_define_class_under(outer, "Quaternion", rb_cNumerixStruct);
 
     rb_define_method(rb_cVector2, "x", rb_vector_base_x, 0);
     rb_define_method(rb_cVector2, "y", rb_vector_base_y, 0);
@@ -32,6 +34,15 @@ void Init_vector_base(VALUE outer) {
     rb_define_method(rb_cVector4, "y=", rb_vector_base_y_set, 1);
     rb_define_method(rb_cVector4, "z=", rb_vector_base_z_set, 1);
     rb_define_method(rb_cVector4, "w=", rb_vector_base_w_set, 1);
+
+    rb_define_method(rb_cQuaternion, "x", rb_vector_base_x, 0);
+    rb_define_method(rb_cQuaternion, "y", rb_vector_base_y, 0);
+    rb_define_method(rb_cQuaternion, "z", rb_vector_base_z, 0);
+    rb_define_method(rb_cQuaternion, "w", rb_vector_base_w, 0);
+    rb_define_method(rb_cQuaternion, "x=", rb_vector_base_x_set, 1);
+    rb_define_method(rb_cQuaternion, "y=", rb_vector_base_y_set, 1);
+    rb_define_method(rb_cQuaternion, "z=", rb_vector_base_z_set, 1);
+    rb_define_method(rb_cQuaternion, "w=", rb_vector_base_w_set, 1);
 }
 
 VALUE rb_vector_base_x(VALUE self) {
