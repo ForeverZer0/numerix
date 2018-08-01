@@ -137,7 +137,7 @@ VALUE rb_plane_from_vertices_s(VALUE klass, VALUE vert1, VALUE vert2, VALUE vert
     return NUMERIX_WRAP(klass, p);
 }
 
-static inline VALUE rb_plane_normalize_s(VALUE klass, VALUE plane) {
+VALUE rb_plane_normalize_s(VALUE klass, VALUE plane) {
     Plane *p, *result;
     Data_Get_Struct(plane, Plane, p);
     result = ALLOC(Plane);

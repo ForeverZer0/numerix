@@ -22,7 +22,7 @@ VALUE rb_plane_to_s(VALUE self);
 
 // Class
 VALUE rb_plane_from_vertices_s(VALUE klass, VALUE vert1, VALUE vert2, VALUE vert3);
-static inline VALUE rb_plane_normalize_s(VALUE klass, VALUE plane);
+VALUE rb_plane_normalize_s(VALUE klass, VALUE plane);
 static inline VALUE rb_plane_transform_s(VALUE klass, VALUE plane, VALUE matrix);
 static inline VALUE rb_plane_dot_s(VALUE klass, VALUE plane, VALUE vec4);
 static inline VALUE rb_plane_dot_coord_s(VALUE klass, VALUE plane, VALUE vec3);
