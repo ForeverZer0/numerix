@@ -1,8 +1,6 @@
 
 #include "quaternion.h"
 
-
-
 void Init_quaternion(VALUE outer) {
     rb_define_alloc_func(rb_cQuaternion, rb_quaternion_alloc);
     rb_define_method(rb_cQuaternion, "initialize", rb_quaternion_initialize, -1);
@@ -41,10 +39,6 @@ void Init_quaternion(VALUE outer) {
     rb_define_singleton_method(rb_cQuaternion, "divide", rb_quaternion_divide_s, 2);
 }
 
-// normalize, !
-// conjugate, !
-// inverse, !
-
 VALUE rb_quaternion_alloc(VALUE klass) {
     Quaternion *q = ALLOC(Quaternion);
     memset(q, 0, sizeof(Quaternion));
@@ -78,7 +72,6 @@ VALUE rb_quaternion_initialize(int argc, VALUE *argv, VALUE self) {
         default:
             rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 2, 4)", argc);
             break;
-
     }
     return Qnil;
 }
