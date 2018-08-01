@@ -4,8 +4,8 @@
 #include "common.h"
 #include "matrix_base.h"
 
-void Init_matrix4x4(VALUE outer);
-
-VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix);
+#define MATRIX4X4() \
+    Matrix4x4 *m;   \
+    Data_Get_Struct(self, Matrix4x4, m)
 
 #endif /* NUMERIX_MATRIX4X4_H */
