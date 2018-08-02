@@ -10,18 +10,17 @@
     Matrix4x4 *m;   \
     Data_Get_Struct(self, Matrix4x4, m)
 
-// typedef struct CanonicalBasis {
-//     Vector3 row0;
-//     Vector3 row1;
-//     Vector3 row2;
-// } CanonicalBasis;
+typedef struct CanonicalBasis {
+    Vector3 row0;
+    Vector3 row1;
+    Vector3 row2;
+} CanonicalBasis;
 
-// typedef struct VectorBasis {
-//     Vector3* element0;
-//     Vector3* element1;
-//     Vector3* element2;
-// } VectorBasis;
-
+typedef struct VectorBasis {
+    Vector3* element0;
+    Vector3* element1;
+    Vector3* element2;
+} VectorBasis;
 
 void Init_matrix4x4(VALUE outer);
 static VALUE rb_matrix4x4_allocate(VALUE klass);
@@ -56,7 +55,6 @@ VALUE rb_matrix4x4_from_yaw_pitch_roll(VALUE klass, VALUE yaw, VALUE pitch, VALU
 VALUE rb_matrix4x4_create_shadow(VALUE klass, VALUE light, VALUE plane);
 VALUE rb_matrix4x4_create_reflection(VALUE klass, VALUE plane);
 VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix);
-VALUE rb_matrix4x4_decompose_s(VALUE klass, VALUE matrix);
 VALUE rb_matrix4x4_transform_s(VALUE klass, VALUE matrix, VALUE quaternion);
 VALUE rb_matrix4x4_transpose_s(VALUE klass, VALUE matrix);
 VALUE rb_matrix4x4_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix2, VALUE amount);

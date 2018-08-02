@@ -17,7 +17,13 @@ VALUE rb_vector2_multiply(VALUE self, VALUE other);
 VALUE rb_vector2_divide(VALUE self, VALUE other);
 VALUE rb_vector2_equal(VALUE self, VALUE other);
 VALUE rb_vector2_negate(VALUE self);
+
+// Conversion
 VALUE rb_vector2_to_s(VALUE self);
+VALUE rb_vector2_to_a(VALUE self);
+VALUE rb_vector2_to_h(VALUE self);
+VALUE rb_vector2_to_vec3(VALUE self);
+VALUE rb_vector2_to_vec4(VALUE self);
 
 // Class
 VALUE rb_vector2_one(VALUE klass);

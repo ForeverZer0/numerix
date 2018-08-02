@@ -13,6 +13,12 @@ void Init_vector4(VALUE outer) {
 
     // Conversion
     rb_define_method(rb_cVector4, "to_s", rb_vector4_to_s, 0);
+    rb_define_method(rb_cVector4, "to_a", rb_vector4_to_a, 0);
+    rb_define_method(rb_cVector4, "to_h", rb_vector4_to_h, 0);
+    rb_define_method(rb_cVector4, "to_quaternion", rb_vector4_to_quaternion, 0);
+    rb_define_method(rb_cVector4, "to_plane", rb_vector4_to_plane, 0);
+    rb_define_method(rb_cVector4, "to_vec2", rb_vector4_to_vec2, 0);
+    rb_define_method(rb_cVector4, "to_vec3", rb_vector4_to_vec3, 0);
 
     // Operators
     rb_define_method(rb_cVector4, "+", rb_vector4_add, 1);
@@ -208,6 +214,57 @@ VALUE rb_vector4_negate(VALUE self) {
 VALUE rb_vector4_to_s(VALUE self) {
     VECTOR4();
     return rb_sprintf("<%f, %f, %f, %f>", v->x, v->y, v->z, v->w);
+}
+
+VALUE rb_vector4_to_a(VALUE self) {
+    VECTOR4();
+    VALUE ary = rb_ary_new_capa(4);
+    rb_ary_store(ary, 0, v->x);
+    rb_ary_store(ary, 1, v->y);
+    rb_ary_store(ary, 2, v->z);
+    rb_ary_store(ary, 3, v->w);
+    return ary;
+}
+
+VALUE rb_vector4_to_h(VALUE self) {
+    VECTOR4();
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("x")), v->x);
+    rb_hash_aset(hash, ID2SYM(rb_intern("y")), v->y);
+    rb_hash_aset(hash, ID2SYM(rb_intern("z")), v->z);
+    rb_hash_aset(hash, ID2SYM(rb_intern("w")), v->w);
+    return hash;
+}
+
+VALUE rb_vector4_to_vec2(VALUE self) {
+    VECTOR4();
+    Vector2 *vec = ALLOC(Vector2);
+    vec->x = v->x;
+    vec->y = v->y;
+    return NUMERIX_WRAP(rb_cVector2, vec);
+}
+
+VALUE rb_vector4_to_vec3(VALUE self) {
+    VECTOR4();
+    Vector3 *vec = ALLOC(Vector3);
+    vec->x = v->x;
+    vec->y = v->y;
+    vec->z = v->z;
+    return NUMERIX_WRAP(rb_cVector3, vec);
+}
+
+VALUE rb_vector4_to_quaternion(VALUE self) {
+    VECTOR4();
+    Quaternion *q = ALLOC(Quaternion);
+    memcpy(q, v, sizeof(Vector4));
+    return NUMERIX_WRAP(rb_cQuaternion, q);
+}
+
+VALUE rb_vector4_to_plane(VALUE self) {
+    VECTOR4();
+    Plane *p = ALLOC(Plane);
+    memcpy(p, v, sizeof(Vector4));
+    return NUMERIX_WRAP(rb_cPlane, p);   
 }
 
 static inline VALUE rb_vector4_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {

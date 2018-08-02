@@ -13,6 +13,12 @@ void Init_vector3(VALUE outer) {
 
     // Conversion
     rb_define_method(rb_cVector3, "to_s", rb_vector3_to_s, 0);
+    rb_define_method(rb_cVector3, "to_a", rb_vector3_to_a, 0);
+    rb_define_method(rb_cVector3, "to_h", rb_vector3_to_h, 0);
+    rb_define_method(rb_cVector3, "to_quaternion", rb_vector3_to_quaternion, 0);
+    rb_define_method(rb_cVector3, "to_plane", rb_vector3_to_plane, 0);
+    rb_define_method(rb_cVector3, "to_vec2", rb_vector3_to_vec2, 0);
+    rb_define_method(rb_cVector3, "to_vec4", rb_vector3_to_vec4, 0);
 
     // Operators
     rb_define_method(rb_cVector3, "+", rb_vector3_add, 1);
@@ -176,6 +182,58 @@ VALUE rb_vector3_negate(VALUE self) {
 VALUE rb_vector3_to_s(VALUE self) {
     VECTOR3();
     return rb_sprintf("<%f, %f, %f>", v->x, v->y, v->z);
+}
+
+VALUE rb_vector3_to_a(VALUE self) {
+    VECTOR3();
+    VALUE ary = rb_ary_new_capa(3);
+    rb_ary_store(ary, 0, v->x);
+    rb_ary_store(ary, 1, v->y);
+    rb_ary_store(ary, 2, v->z);
+    return ary;
+}
+
+VALUE rb_vector3_to_h(VALUE self) {
+    VECTOR3();
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("x")), v->x);
+    rb_hash_aset(hash, ID2SYM(rb_intern("y")), v->y);
+    rb_hash_aset(hash, ID2SYM(rb_intern("z")), v->z);
+    return hash;
+}
+
+VALUE rb_vector3_to_vec2(VALUE self) {
+    VECTOR3();
+    Vector2 *vec = ALLOC(Vector2);
+    vec->x = v->x;
+    vec->y = v->y;
+    return NUMERIX_WRAP(rb_cVector2, vec);
+}
+
+VALUE rb_vector3_to_vec4(VALUE self) {
+    VECTOR3();
+    Vector4 *vec = ALLOC(Vector4);
+    vec->x = v->x;
+    vec->y = v->y;
+    vec->z = v->z;
+    vec->w = 0.0f;
+    return NUMERIX_WRAP(rb_cVector4, vec);
+}
+
+VALUE rb_vector3_to_quaternion(VALUE self) {
+    VECTOR3();
+    Quaternion *q = ALLOC(Quaternion);
+    memcpy(q, v, sizeof(Vector3));
+    q->w = 0.0f;
+    return NUMERIX_WRAP(rb_cQuaternion, q);
+}
+
+VALUE rb_vector3_to_plane(VALUE self) {
+    VECTOR3();
+    Plane *p = ALLOC(Plane);
+    memcpy(p, v, sizeof(Vector3));
+    p->distance = 0.0f;
+    return NUMERIX_WRAP(rb_cPlane, p);   
 }
 
 static inline VALUE rb_vector3_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {

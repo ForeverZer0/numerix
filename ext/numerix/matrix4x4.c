@@ -35,7 +35,6 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix4x4, "create_shadow", rb_matrix4x4_create_shadow, 2);
     rb_define_singleton_method(rb_cMatrix4x4, "create_reflection", rb_matrix4x4_create_reflection, 1);
     rb_define_singleton_method(rb_cMatrix4x4, "invert", rb_matrix4x4_invert_s, 1);
-    rb_define_singleton_method(rb_cMatrix4x4, "decompose", rb_matrix4x4_decompose_s, 1);
     rb_define_singleton_method(rb_cMatrix4x4, "transform", rb_matrix4x4_transform_s, 2);
     rb_define_singleton_method(rb_cMatrix4x4, "transpose", rb_matrix4x4_transpose_s, 1);
     rb_define_singleton_method(rb_cMatrix4x4, "lerp", rb_matrix4x4_lerp_s, 3);
@@ -1483,10 +1482,4 @@ VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix) {
     }
 
     return NUMERIX_WRAP(klass, mat);
-}
-
-VALUE rb_matrix4x4_decompose_s(VALUE klass, VALUE matrix) {
-
-    return Qnil; // TODO: Implement
-
 }

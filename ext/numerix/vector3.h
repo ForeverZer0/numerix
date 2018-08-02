@@ -11,13 +11,21 @@ VALUE rb_vector3_initialize(int argc, VALUE *argv, VALUE self);
 // Instance
 VALUE rb_vector3_length(VALUE self);
 VALUE rb_vector3_length_squared(VALUE self);
-VALUE rb_vector3_to_s(VALUE self);
 VALUE rb_vector3_add(VALUE self, VALUE other);
 VALUE rb_vector3_subtract(VALUE self, VALUE other);
 VALUE rb_vector3_multiply(VALUE self, VALUE other);
 VALUE rb_vector3_divide(VALUE self, VALUE other);
 VALUE rb_vector3_equal(VALUE self, VALUE other);
 VALUE rb_vector3_negate(VALUE self);
+
+// Conversion
+VALUE rb_vector3_to_s(VALUE self);
+VALUE rb_vector3_to_a(VALUE self);
+VALUE rb_vector3_to_h(VALUE self);
+VALUE rb_vector3_to_vec2(VALUE self);
+VALUE rb_vector3_to_vec4(VALUE self);
+VALUE rb_vector3_to_quaternion(VALUE self);
+VALUE rb_vector3_to_plane(VALUE self);
 
 // Class
 VALUE rb_vector3_one(VALUE klass);

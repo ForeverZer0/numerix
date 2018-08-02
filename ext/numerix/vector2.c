@@ -13,6 +13,10 @@ void Init_vector2(VALUE outer) {
 
     // Conversion
     rb_define_method(rb_cVector2, "to_s", rb_vector2_to_s, 0);
+    rb_define_method(rb_cVector2, "to_a", rb_vector2_to_a, 0);
+    rb_define_method(rb_cVector2, "to_h", rb_vector2_to_h, 0);
+    rb_define_method(rb_cVector2, "to_vec3", rb_vector2_to_vec3, 0);
+    rb_define_method(rb_cVector2, "to_vec4", rb_vector2_to_vec4, 0);
 
     // Operators
     rb_define_method(rb_cVector2, "+", rb_vector2_add, 1);
@@ -140,6 +144,41 @@ VALUE rb_vector2_negate(VALUE self) {
 VALUE rb_vector2_to_s(VALUE self) {
     VECTOR2();
     return rb_sprintf("<%f, %f>", v->x, v->y);
+}
+
+VALUE rb_vector2_to_a(VALUE self) {
+    VECTOR2();
+    VALUE ary = rb_ary_new_capa(2);
+    rb_ary_store(ary, 0, v->x);
+    rb_ary_store(ary, 1, v->y);
+    return ary;
+}
+
+VALUE rb_vector2_to_h(VALUE self) {
+    VECTOR2();
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("x")), v->x);
+    rb_hash_aset(hash, ID2SYM(rb_intern("y")), v->y);
+    return hash;
+}
+
+VALUE rb_vector2_to_vec3(VALUE self) {
+    VECTOR2();
+    Vector3 *vec = ALLOC(Vector3);
+    vec->x = v->x;
+    vec->y = v->y;
+    vec->z = 0.0f;
+    return NUMERIX_WRAP(rb_cVector3, vec);
+}
+
+VALUE rb_vector2_to_vec4(VALUE self) {
+    VECTOR2();
+    Vector4 *vec = ALLOC(Vector4);
+    vec->x = v->x;
+    vec->y = v->y;
+    vec->z = 0.0f;
+    vec->w = 0.0f;
+    return NUMERIX_WRAP(rb_cVector4, vec);
 }
 
 static inline VALUE rb_vector2_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {
