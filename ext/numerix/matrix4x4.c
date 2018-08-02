@@ -6,12 +6,20 @@ void Init_matrix4x4(VALUE outer) {
     
     rb_define_alloc_func(rb_cMatrix4x4, rb_matrix4x4_allocate);
     rb_define_method(rb_cMatrix4x4, "initialize", rb_matrix4x4_initialize, -1);
+
     // Instance
     rb_define_method(rb_cMatrix4x4, "identity?", rb_matrix4x4_identity_p, 0);
     rb_define_method(rb_cMatrix4x4, "translation", rb_matrix4x4_translation, 0);
     rb_define_method(rb_cMatrix4x4, "translation=", rb_matrix4x4_translation_set, 1);
     rb_define_method(rb_cMatrix4x4, "determinant", rb_matrix4x4_determinant, 0);
     rb_define_method(rb_cMatrix4x4, "to_s", rb_matrix4x4_to_s, 0);
+    
+    // Operators
+    rb_define_method(rb_cMatrix4x4, "+", rb_matrix4x4_add, 1);
+    rb_define_method(rb_cMatrix4x4, "-", rb_matrix4x4_subtract, 1);
+    rb_define_method(rb_cMatrix4x4, "*", rb_matrix4x4_mulitiply, 1);
+    rb_define_method(rb_cMatrix4x4, "-@", rb_matrix4x4_negate, 0);
+    rb_define_method(rb_cMatrix4x4, "==", rb_matrix4x4_equal, 1);
 
     // // Class
     rb_define_singleton_method(rb_cMatrix4x4, "identity", rb_matrix4x4_identity, 0);
@@ -42,7 +50,6 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix4x4, "add", rb_matrix4x4_add_s, 2);
     rb_define_singleton_method(rb_cMatrix4x4, "subtract", rb_matrix4x4_subtract_s, 2);
     rb_define_singleton_method(rb_cMatrix4x4, "multiply", rb_matrix4x4_multiply_s, 2);
-    rb_define_singleton_method(rb_cMatrix4x4, "equal?", rb_matrix4x4_equal_s, 2);
 
 }
 
@@ -222,6 +229,33 @@ VALUE rb_matrix4x4_to_s(VALUE self) {
         m->m31, m->m32, m->m33, m->m34, m->m41, m->m42, m->m43, m->m44);
 }
 
+VALUE rb_matrix4x4_add(VALUE self, VALUE other) {
+    return rb_matrix4x4_add_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_matrix4x4_subtract(VALUE self, VALUE other) {
+    return rb_matrix4x4_subtract_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_matrix4x4_mulitiply(VALUE self, VALUE other) {
+    return rb_matrix4x4_multiply_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_matrix4x4_negate(VALUE self) {
+    return rb_matrix4x4_negate_s(CLASS_OF(self), self);
+}
+
+VALUE rb_matrix4x4_equal(VALUE self, VALUE other) {
+    if (CLASS_OF(other) != CLASS_OF(self))
+        return Qfalse;
+    Matrix4x4 *m1, *m2;
+    Data_Get_Struct(self, Matrix4x4, m1);
+    Data_Get_Struct(other, Matrix4x4, m2);
+    return FLT_EQUAL(m1->m11, m2->m11) && FLT_EQUAL(m1->m12, m2->m12) && FLT_EQUAL(m1->m13, m2->m13) && FLT_EQUAL(m1->m14, m2->m14) &&
+           FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) && FLT_EQUAL(m1->m23, m2->m23) && FLT_EQUAL(m1->m24, m2->m24) &&
+           FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) && FLT_EQUAL(m1->m33, m2->m33) && FLT_EQUAL(m1->m34, m2->m34) &&
+           FLT_EQUAL(m1->m41, m2->m41) && FLT_EQUAL(m1->m42, m2->m42) && FLT_EQUAL(m1->m43, m2->m43) && FLT_EQUAL(m1->m44, m2->m44) ? Qtrue : Qfalse;
+}
 
 VALUE rb_matrix4x4_identity(VALUE klass) {
     Matrix4x4 *m = ALLOC(Matrix4x4);
@@ -1305,19 +1339,6 @@ VALUE rb_matrix4x4_multiply_s(VALUE klass, VALUE matrix, VALUE other) {
     }
 
     return NUMERIX_WRAP(klass, result);
-}
-
-VALUE rb_matrix4x4_equal_s(VALUE klass, VALUE matrix, VALUE other) {
-    if (CLASS_OF(matrix) != CLASS_OF(other))
-        return Qfalse;
-    Matrix4x4 *m1, *m2;
-    Data_Get_Struct(matrix, Matrix4x4, m1);
-    Data_Get_Struct(other, Matrix4x4, m2);
-    // Check diagonal element first for early out.
-    return (m1->m11 == m2->m11 && m1->m22 == m2->m22 && m1->m33 == m2->m33 && m1->m44 == m2->m44 && 
-            m1->m12 == m2->m12 && m1->m13 == m2->m13 && m1->m14 == m2->m14 && m1->m21 == m2->m21 &&
-            m1->m23 == m2->m23 && m1->m24 == m2->m24 && m1->m31 == m2->m31 && m1->m32 == m2->m32 &&
-            m1->m34 == m2->m34 && m1->m41 == m2->m41 && m1->m42 == m2->m42 && m1->m43 == m2->m43) ? Qtrue : Qfalse;
 }
 
 VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix) {

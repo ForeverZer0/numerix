@@ -62,7 +62,6 @@ static inline VALUE rb_vector2_add_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector2_subtract_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector2_multiply_s(VALUE klass, VALUE vec, VALUE other);
 static inline VALUE rb_vector2_divide_s(VALUE klass, VALUE vec, VALUE other);
-static inline VALUE rb_vector2_equal_s(VALUE klass, VALUE vec, VALUE other);
 static inline VALUE rb_vector2_negate_s(VALUE klass, VALUE vec);
 static inline VALUE rb_vector2_dot_s(VALUE klass, VALUE vec1, VALUE vec2);
 

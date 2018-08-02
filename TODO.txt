@@ -20,10 +20,6 @@ angle (?)
 reflect
 reflect!
 
-min(other)
-max(other)
-
-to_a, to_h, to_vec3, to_vec4
 cross, cross!
 
 ** NO cross, transform_normal, or reflect for Vector4 **

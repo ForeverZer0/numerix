@@ -32,6 +32,11 @@ VALUE rb_matrix4x4_translation(VALUE self);
 VALUE rb_matrix4x4_translation_set(VALUE self, VALUE value);
 VALUE rb_matrix4x4_determinant(VALUE self);
 VALUE rb_matrix4x4_to_s(VALUE self);
+VALUE rb_matrix4x4_add(VALUE self, VALUE other);
+VALUE rb_matrix4x4_subtract(VALUE self, VALUE other);
+VALUE rb_matrix4x4_mulitiply(VALUE self, VALUE other);
+VALUE rb_matrix4x4_negate(VALUE self);
+VALUE rb_matrix4x4_equal(VALUE self, VALUE other);
 
 // // Class
 VALUE rb_matrix4x4_identity(VALUE klass);
@@ -62,7 +67,6 @@ VALUE rb_matrix4x4_negate_s(VALUE klass, VALUE matrix);
 VALUE rb_matrix4x4_add_s(VALUE klass, VALUE matrix1, VALUE matrix2);
 VALUE rb_matrix4x4_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2);
 VALUE rb_matrix4x4_multiply_s(VALUE klass, VALUE matrix, VALUE other);
-VALUE rb_matrix4x4_equal_s(VALUE klass, VALUE matrix, VALUE other);
 
 // Internal
 static inline void numerix_vec3_normalize(Vector3 *v);

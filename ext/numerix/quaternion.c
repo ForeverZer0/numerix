@@ -117,7 +117,12 @@ VALUE rb_quaternion_divide(VALUE self, VALUE other) {
 }
 
 VALUE rb_quaternion_equal(VALUE self, VALUE other) {
-    return rb_quaternion_equal_s(CLASS_OF(self), self, other);
+    if (CLASS_OF(other) != CLASS_OF(self))
+        return Qfalse;
+    Quaternion *q1, *q2;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    return FLT_EQUAL(q1->x, q2->x) && FLT_EQUAL(q1->y, q2->y) && FLT_EQUAL(q1->z, q2->z) && FLT_EQUAL(q1->w, q2->w) ? Qtrue : Qfalse;
 }
 
 VALUE rb_quaternion_to_s(VALUE self) {
@@ -548,13 +553,4 @@ static inline VALUE rb_quaternion_divide_s(VALUE klass, VALUE quaternion1, VALUE
     result->w = q1w * q2w - dot;
 
      return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_equal_s(VALUE klass, VALUE quaternion, VALUE other) {
-    if (CLASS_OF(quaternion) != CLASS_OF(other))
-        return Qfalse;
-    Quaternion *q1, *q2;
-    Data_Get_Struct(quaternion, Quaternion, q1);
-    Data_Get_Struct(other, Quaternion, q2);
-    return q1->x == q2->x && q1->y == q2->y && q1->z == q2->z && q1->w == q2->w ? Qtrue : Qfalse;
 }

@@ -44,6 +44,5 @@ static inline VALUE rb_quaternion_add_s(VALUE klass, VALUE quaternion1, VALUE qu
 static inline VALUE rb_quaternion_subtract_s(VALUE klass, VALUE quaternion1, VALUE quaternion2);
 static inline VALUE rb_quaternion_multiply_s(VALUE klass, VALUE quaternion, VALUE other);
 static inline VALUE rb_quaternion_divide_s(VALUE klass, VALUE quaternion, VALUE other);
-static inline VALUE rb_quaternion_equal_s(VALUE klass, VALUE quaternion, VALUE other);
 
 #endif /* NUMERIX_QUATERNION_H */

@@ -65,7 +65,6 @@ void Init_vector2(VALUE outer) {
     rb_define_singleton_method(rb_cVector2, "subtract", rb_vector2_subtract_s, 2);
     rb_define_singleton_method(rb_cVector2, "multiply", rb_vector2_multiply_s, 2);
     rb_define_singleton_method(rb_cVector2, "divide", rb_vector2_divide_s, 2);
-    rb_define_singleton_method(rb_cVector2, "equal?", rb_vector2_equal_s, 2);
     rb_define_singleton_method(rb_cVector2, "negate", rb_vector2_negate_s, 1);
     
 }
@@ -151,7 +150,12 @@ VALUE rb_vector2_divide(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector2_equal(VALUE self, VALUE other) {
-    return rb_vector2_equal_s(CLASS_OF(self), self, other);
+    if (CLASS_OF(other) != CLASS_OF(self))
+        return Qfalse;
+    Vector2 *v1, *v2;
+    Data_Get_Struct(self, Vector2, v1);
+    Data_Get_Struct(other, Vector2, v2);
+    return FLT_EQUAL(v1->x, v2->x) && FLT_EQUAL(v1->y, v2->y) ? Qtrue : Qfalse;
 }
 
 VALUE rb_vector2_negate(VALUE self) {
@@ -591,13 +595,3 @@ static inline VALUE rb_vector2_negate_s(VALUE klass, VALUE vec) {
     return NUMERIX_WRAP(klass, result);
 }
 
-static inline VALUE rb_vector2_equal_s(VALUE klass, VALUE vec, VALUE other) {
-    if (!NUMERIX_INHERIT_P(CLASS_OF(vec), klass) && NUMERIX_INHERIT_P(CLASS_OF(other), klass))
-        return Qfalse;
-
-    Vector2 *v1, *v2;
-    Data_Get_Struct(vec, Vector2, v1);
-    Data_Get_Struct(other, Vector2, v2);
-    
-    return v1->x == v2->x && v1->y == v2->y ? Qtrue : Qfalse;
-}

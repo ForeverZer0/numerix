@@ -18,6 +18,8 @@
 
 #define CLASS_NAME(obj) rb_class2name(CLASS_OF(obj))
 
+#define FLT_EQUAL(a, b) fabsf(a - b) < FLT_EPSILON
+
 typedef struct Vector2 {
     float x; /* The X component of the vector. */
     float y; /* The Y component of the vector. */

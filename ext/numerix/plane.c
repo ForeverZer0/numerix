@@ -25,7 +25,6 @@ void Init_plane(VALUE outer) {
     rb_define_singleton_method(rb_cPlane, "dot", rb_plane_dot_s, 2);
     rb_define_singleton_method(rb_cPlane, "dot_coord", rb_plane_dot_coord_s, 2);
     rb_define_singleton_method(rb_cPlane, "dot_normal", rb_plane_dot_normal_s, 2);
-    rb_define_singleton_method(rb_cPlane, "equals?", rb_plane_equal_s, 2);
   
 }
 
@@ -97,7 +96,13 @@ VALUE rb_plane_distance_set(VALUE self, VALUE value) {
 }
 
 VALUE rb_plane_equal(VALUE self, VALUE other) {
-    return rb_plane_equal_s(CLASS_OF(self), self, other);
+    if (CLASS_OF(other) != CLASS_OF(self))
+        return Qfalse;
+    Plane *p1, *p2;
+    Data_Get_Struct(self, Plane, p1);
+    Data_Get_Struct(other, Plane, p2);
+    return FLT_EQUAL(p1->normal.x, p2->normal.x) && FLT_EQUAL(p1->normal.y, p2->normal.y) && 
+           FLT_EQUAL(p1->normal.z, p2->normal.z) && FLT_EQUAL(p1->distance, p2->distance) ? Qtrue : Qfalse;
 }
 
 VALUE rb_plane_to_s(VALUE self) {
@@ -247,15 +252,4 @@ static inline VALUE rb_plane_dot_normal_s(VALUE klass, VALUE plane, VALUE vec3) 
     Data_Get_Struct(vec3, Vector3, v);
 
     return DBL2NUM(p->normal.x * v->x + p->normal.y * v->y + p->normal.z * v->z);
-}
-
-static inline VALUE rb_plane_equal_s(VALUE klass, VALUE plane, VALUE other) {
-    if (CLASS_OF(plane) != klass || CLASS_OF(other) != klass)
-        return Qfalse;
-    Plane *p1, *p2;
-    Data_Get_Struct(plane, Plane, p1);
-    Data_Get_Struct(other, Plane, p2);
-
-    return p1->normal.x == p1->normal.x && p1->normal.y == p1->normal.y &&
-        p1->normal.z == p1->normal.z && p1->distance == p1->distance ? Qtrue : Qfalse;
 }

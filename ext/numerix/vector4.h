@@ -66,7 +66,6 @@ static inline VALUE rb_vector4_subtract_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector4_multiply_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector4_divide_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector4_negate_s(VALUE klass, VALUE vec);
-static inline VALUE rb_vector4_equal_s(VALUE klass, VALUE vec, VALUE other);
 
 // Internal
 static inline void rb_vector4_normalize_intern(Vector4 *v, Vector4 *result);

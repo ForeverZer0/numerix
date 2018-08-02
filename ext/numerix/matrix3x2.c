@@ -32,7 +32,6 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix3x2, "add", rb_matrix3x2_add_s, 2);
     rb_define_singleton_method(rb_cMatrix3x2, "subtract", rb_matrix3x2_subtract_s, 2);
     rb_define_singleton_method(rb_cMatrix3x2, "multiply", rb_matrix3x2_multiply_s, 2);
-    rb_define_singleton_method(rb_cMatrix3x2, "equal?", rb_matrix3x2_equal_s, 2);
 
 }
 
@@ -138,7 +137,14 @@ VALUE rb_matrix3x2_multiply(VALUE self, VALUE other) {
 }
 
 VALUE rb_matrix3x2_equal(VALUE self, VALUE other) {
-    return rb_matrix3x2_equal_s(CLASS_OF(self), self, other);
+    if (CLASS_OF(other) != CLASS_OF(self))
+        return Qfalse;
+    Matrix3x2 *m1, *m2;
+    Data_Get_Struct(self, Matrix3x2, m1);
+    Data_Get_Struct(other, Matrix3x2, m2);
+    return FLT_EQUAL(m1->m11, m2->m11) && FLT_EQUAL(m1->m12, m2->m12) &&
+           FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) &&
+           FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) ? Qtrue : Qfalse;
 }
 
 VALUE rb_matrix3x2_to_s(VALUE self) {
@@ -467,16 +473,4 @@ static inline VALUE rb_matrix3x2_multiply_s(VALUE klass, VALUE matrix, VALUE oth
     }
 
     return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_matrix3x2_equal_s(VALUE klass, VALUE matrix, VALUE other) {
-    if (CLASS_OF(matrix) != CLASS_OF(other))
-        return Qfalse;
-    Matrix3x2 *m1, *m2;
-    Data_Get_Struct(matrix, Matrix3x2, m1);
-    Data_Get_Struct(other, Matrix3x2, m2);
-
-    // Check diagonal element first for early out.
-    return (m1->m11 == m2->m11 && m1->m22 == m2->m22 && m1->m12 == m2->m12 &&
-            m1->m21 == m2->m21 &&  m1->m31 == m2->m31 && m1->m32 == m2->m32) ? Qtrue : Qfalse;
 }

@@ -36,6 +36,5 @@ static inline VALUE rb_matrix3x2_negate_s(VALUE klass, VALUE matrix);
 static inline VALUE rb_matrix3x2_add_s(VALUE klass, VALUE matrix1, VALUE matrix2);
 static inline VALUE rb_matrix3x2_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2);
 static inline VALUE rb_matrix3x2_multiply_s(VALUE klass, VALUE matrix, VALUE other);
-static inline VALUE rb_matrix3x2_equal_s(VALUE klass, VALUE matrix, VALUE other);
 
 #endif /* NUMERIX_MATRIX3X2_H */

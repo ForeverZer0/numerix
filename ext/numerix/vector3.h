@@ -68,7 +68,6 @@ static inline VALUE rb_vector3_subtract_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector3_multiply_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector3_divide_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector3_negate_s(VALUE klass, VALUE vec);
-static inline VALUE rb_vector3_equal_s(VALUE klass, VALUE vec, VALUE other);
 
 // Internal
 static inline void rb_vector3_cross_intern(Vector3 *vec1, Vector3 *vec2, Vector3 *result);
