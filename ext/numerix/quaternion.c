@@ -9,7 +9,12 @@ void Init_quaternion(VALUE outer) {
     rb_define_method(rb_cQuaternion, "identity?", rb_quaternion_identity_p, 0);
     rb_define_method(rb_cQuaternion, "length", rb_quaternion_length, 0);
     rb_define_method(rb_cQuaternion, "length_squared", rb_quaternion_length_squared, 0);
+
+    // Conversion
     rb_define_method(rb_cQuaternion, "to_s", rb_quaternion_to_s, 0);
+    rb_define_method(rb_cQuaternion, "to_a", rb_quaternion_to_a, 0);
+    rb_define_method(rb_cQuaternion, "to_h", rb_quaternion_to_h, 0);
+    rb_define_method(rb_cQuaternion, "to_vec4", rb_quaternion_to_vec4, 0);
 
     // Operators
     rb_define_method(rb_cQuaternion, "-@", rb_quaternion_negate, 0);
@@ -118,6 +123,33 @@ VALUE rb_quaternion_equal(VALUE self, VALUE other) {
 VALUE rb_quaternion_to_s(VALUE self) {
     QUATERNION();
     return rb_sprintf("{%f, %f, %f, %f}", q->x, q->y, q->z, q->w);
+}
+
+VALUE rb_quaternion_to_a(VALUE self) {
+    QUATERNION();
+    VALUE ary = rb_ary_new_capa(4);
+    rb_ary_store(ary, 0, DBL2NUM(q->x));
+    rb_ary_store(ary, 1, DBL2NUM(q->y));
+    rb_ary_store(ary, 2, DBL2NUM(q->z));
+    rb_ary_store(ary, 3, DBL2NUM(q->w));
+    return ary;
+}
+
+VALUE rb_quaternion_to_h(VALUE self) {
+    QUATERNION();
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("x")), DBL2NUM(q->x));
+    rb_hash_aset(hash, ID2SYM(rb_intern("y")), DBL2NUM(q->y));
+    rb_hash_aset(hash, ID2SYM(rb_intern("z")), DBL2NUM(q->z));
+    rb_hash_aset(hash, ID2SYM(rb_intern("w")), DBL2NUM(q->w));
+    return hash;
+}
+
+VALUE rb_quaternion_to_vec4(VALUE self) {
+    QUATERNION();
+    Vector4 *v = ALLOC(Vector4);
+    memcpy(v, q, sizeof(Quaternion));
+    return NUMERIX_WRAP(rb_cVector4, v);
 }
 
 VALUE rb_quaternion_identity(VALUE klass) {

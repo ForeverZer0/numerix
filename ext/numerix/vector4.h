@@ -17,6 +17,23 @@ VALUE rb_vector4_multiply(VALUE self, VALUE other);
 VALUE rb_vector4_divide(VALUE self, VALUE other);
 VALUE rb_vector4_equal(VALUE self, VALUE other);
 VALUE rb_vector4_negate(VALUE self);
+VALUE rb_vector4_one_p(VALUE self);
+VALUE rb_vector4_zero_p(VALUE self);
+VALUE rb_vector4_min_value(VALUE self);
+VALUE rb_vector4_max_value(VALUE self);
+VALUE rb_vector4_distance(VALUE self, VALUE other);
+VALUE rb_vector4_distance_squared(VALUE self, VALUE other);
+VALUE rb_vector4_normalize(VALUE self);
+VALUE rb_vector4_normalize_bang(VALUE self);
+VALUE rb_vector4_lerp(VALUE self, VALUE other, VALUE amount);
+VALUE rb_vector4_lerp_bang(VALUE self, VALUE other, VALUE amount);
+VALUE rb_vector4_transform(VALUE self, VALUE other);
+VALUE rb_vector4_transform_bang(VALUE self, VALUE other);
+VALUE rb_vector4_abs(VALUE self);
+VALUE rb_vector4_sqrt(VALUE self);
+VALUE rb_vector4_dot(VALUE self, VALUE other);
+VALUE rb_vector4_clamp(VALUE self, VALUE min, VALUE max);
+VALUE rb_vector4_clamp_bang(VALUE self, VALUE min, VALUE max);
 
 // Conversion
 VALUE rb_vector4_to_s(VALUE self);

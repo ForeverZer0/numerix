@@ -23,6 +23,9 @@ VALUE rb_quaternion_multiply(VALUE self, VALUE other);
 VALUE rb_quaternion_divide(VALUE self, VALUE other);
 VALUE rb_quaternion_equal(VALUE self, VALUE other);
 VALUE rb_quaternion_to_s(VALUE self);
+VALUE rb_quaternion_to_a(VALUE self);
+VALUE rb_quaternion_to_h(VALUE self);
+VALUE rb_quaternion_to_vec4(VALUE self);
 
 // Class
 VALUE rb_quaternion_identity(VALUE klass);

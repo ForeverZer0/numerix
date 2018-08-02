@@ -11,8 +11,8 @@ void Init_plane(VALUE outer) {
     // Instance
     rb_define_method(rb_cPlane, "normal", rb_plane_normal, 0);
     rb_define_method(rb_cPlane, "distance", rb_plane_distance, 0);
-    rb_define_method(rb_cPlane, "normal", rb_plane_normal_set, 1);
-    rb_define_method(rb_cPlane, "distance", rb_plane_distance_set, 1);
+    rb_define_method(rb_cPlane, "normal=", rb_plane_normal_set, 1);
+    rb_define_method(rb_cPlane, "distance=", rb_plane_distance_set, 1);
     rb_define_method(rb_cPlane, "==", rb_plane_equal, 1);
 
     // Conversion

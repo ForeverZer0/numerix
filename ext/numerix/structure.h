@@ -7,6 +7,7 @@ void Init_numerix_structure(VALUE outer);
 
 VALUE rb_numerix_address(VALUE self);
 VALUE rb_numerix_dump(int arc, VALUE *argv, VALUE self);
+VALUE rb_numerix_dup(VALUE self);
 
 static inline int rb_numerix_isize(VALUE klass);
 VALUE rb_numerix_size(VALUE klass);

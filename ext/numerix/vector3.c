@@ -10,6 +10,23 @@ void Init_vector3(VALUE outer) {
     rb_define_method(rb_cVector3, "initialize", rb_vector3_initialize, -1);
     rb_define_method(rb_cVector3, "length", rb_vector3_length, 0);
     rb_define_method(rb_cVector3, "length_squared", rb_vector3_length_squared, 0);
+    rb_define_method(rb_cVector3, "one?", rb_vector3_one_p, 0);
+    rb_define_method(rb_cVector3, "zero?", rb_vector3_zero_p, 0);
+    rb_define_method(rb_cVector3, "min_value", rb_vector3_min_value, 0);
+    rb_define_method(rb_cVector3, "max_value", rb_vector3_max_value, 0);
+    rb_define_method(rb_cVector3, "distance", rb_vector3_distance, 1);
+    rb_define_method(rb_cVector3, "distance_squared", rb_vector3_distance_squared, 1);
+    rb_define_method(rb_cVector3, "normalize", rb_vector3_normalize, 0);
+    rb_define_method(rb_cVector3, "normalize!", rb_vector3_normalize_bang, 0);
+    rb_define_method(rb_cVector3, "lerp", rb_vector3_lerp, 2);
+    rb_define_method(rb_cVector3, "lerp!", rb_vector3_lerp_bang, 2);
+    rb_define_method(rb_cVector3, "transform", rb_vector3_transform, 1);
+    rb_define_method(rb_cVector3, "transform!", rb_vector3_transform_bang, 1);
+    rb_define_method(rb_cVector3, "abs", rb_vector3_abs, 0);
+    rb_define_method(rb_cVector3, "sqrt", rb_vector3_sqrt, 0);
+    rb_define_method(rb_cVector3, "dot", rb_vector3_dot, 1);
+    rb_define_method(rb_cVector3, "clamp", rb_vector3_clamp, 2);
+    rb_define_method(rb_cVector3, "clamp!", rb_vector3_clamp_bang, 2);
 
     // Conversion
     rb_define_method(rb_cVector3, "to_s", rb_vector3_to_s, 0);
@@ -187,18 +204,18 @@ VALUE rb_vector3_to_s(VALUE self) {
 VALUE rb_vector3_to_a(VALUE self) {
     VECTOR3();
     VALUE ary = rb_ary_new_capa(3);
-    rb_ary_store(ary, 0, v->x);
-    rb_ary_store(ary, 1, v->y);
-    rb_ary_store(ary, 2, v->z);
+    rb_ary_store(ary, 0, DBL2NUM(v->x));
+    rb_ary_store(ary, 1, DBL2NUM(v->y));
+    rb_ary_store(ary, 2, DBL2NUM(v->z));
     return ary;
 }
 
 VALUE rb_vector3_to_h(VALUE self) {
     VECTOR3();
     VALUE hash = rb_hash_new();
-    rb_hash_aset(hash, ID2SYM(rb_intern("x")), v->x);
-    rb_hash_aset(hash, ID2SYM(rb_intern("y")), v->y);
-    rb_hash_aset(hash, ID2SYM(rb_intern("z")), v->z);
+    rb_hash_aset(hash, ID2SYM(rb_intern("x")), DBL2NUM(v->x));
+    rb_hash_aset(hash, ID2SYM(rb_intern("y")), DBL2NUM(v->y));
+    rb_hash_aset(hash, ID2SYM(rb_intern("z")), DBL2NUM(v->z));
     return hash;
 }
 
@@ -234,6 +251,105 @@ VALUE rb_vector3_to_plane(VALUE self) {
     memcpy(p, v, sizeof(Vector3));
     p->distance = 0.0f;
     return NUMERIX_WRAP(rb_cPlane, p);   
+}
+
+VALUE rb_vector3_min_value(VALUE self) {
+    VECTOR3();
+    float m = NUMERIX_MIN(v->x, NUMERIX_MIN(v->y, v->z));
+    return DBL2NUM(m);
+}
+
+VALUE rb_vector3_max_value(VALUE self) {
+    VECTOR3();
+    float m = NUMERIX_MAX(v->x, NUMERIX_MAX(v->y, v->z));
+    return DBL2NUM(m);
+}
+
+VALUE rb_vector3_distance(VALUE self, VALUE other) {
+    return rb_vector3_distance_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector3_distance_squared(VALUE self, VALUE other) {
+    return rb_vector3_distance_squared_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector3_normalize(VALUE self) {
+    return rb_vector3_normalize_s(CLASS_OF(self), self);
+}
+
+VALUE rb_vector3_lerp(VALUE self, VALUE other, VALUE amount) {
+    return rb_vector3_lerp_s(CLASS_OF(self), self, other, amount);
+}
+
+VALUE rb_vector3_transform(VALUE self, VALUE other) {
+    return rb_vector3_transform_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector3_abs(VALUE self) {
+    return rb_vector3_abs_s(CLASS_OF(self), self);
+}
+
+VALUE rb_vector3_sqrt(VALUE self) {
+    return rb_vector3_sqrt_s(CLASS_OF(self), self);
+}
+
+VALUE rb_vector3_dot(VALUE self, VALUE other) {
+    return rb_vector3_dot_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector3_clamp(VALUE self, VALUE min, VALUE max) {
+    return rb_vector3_clamp_s(CLASS_OF(self), self, min, max);
+}
+
+VALUE rb_vector3_normalize_bang(VALUE self) {
+    VECTOR3();
+    float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+    v->x = v->x * inv;
+    v->y = v->y * inv;
+    v->z = v->z * inv;
+
+    return self;
+}
+
+VALUE rb_vector3_lerp_bang(VALUE self, VALUE other, VALUE amount) {
+    Vector3 *v1, *v2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    float w = NUMERIX_CLAMP(NUM2FLT(amount), 0.0f, 1.0f);
+
+    v1->x = v1->x + (v2->x - v1->x) * w;
+    v1->y = v1->y + (v2->y - v1->y) * w;
+    v1->z = v1->z + (v2->z - v1->z) * w;
+
+    return self;
+}
+
+VALUE rb_vector3_transform_bang(VALUE self, VALUE other) {
+    struct RData *rdata = RDATA(self);
+    VALUE result = rb_vector3_transform_s(rdata->basic.klass, self, other);
+    Vector3 *src;
+    Data_Get_Struct(result, Vector3, src);
+    memcpy(rdata->data, src, sizeof(Vector3));
+    return self;
+}
+
+VALUE rb_vector3_clamp_bang(VALUE self, VALUE min, VALUE max) {
+    struct RData *rdata = RDATA(self);
+    VALUE result = rb_vector3_clamp_s(rdata->basic.klass, self, min, max);
+    Vector3 *src;
+    Data_Get_Struct(result, Vector3, src);
+    memcpy(rdata->data, src, sizeof(Vector3));
+    return self;
+}
+
+VALUE rb_vector3_one_p(VALUE self) {
+    VECTOR3();
+    return v->x == 1.0f && v->y == 1.0f && v->z == 1.0f ? Qtrue : Qfalse;
+}
+
+VALUE rb_vector3_zero_p(VALUE self) {
+    VECTOR3();
+    return v->x == 0.0f && v->y == 0.0f && v->z == 0.0f ? Qtrue : Qfalse;
 }
 
 static inline VALUE rb_vector3_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {
@@ -561,7 +677,7 @@ static inline VALUE rb_vector3_equal_s(VALUE klass, VALUE vec, VALUE other) {
 
     Vector3 *v1, *v2;
     Data_Get_Struct(vec, Vector3, v1);
-    Data_Get_Struct(vec, Vector3, v2);
+    Data_Get_Struct(other, Vector3, v2); 
     
     return v1->x == v2->x && v1->y == v2->y && v1->z == v2->z ? Qtrue : Qfalse;
 }

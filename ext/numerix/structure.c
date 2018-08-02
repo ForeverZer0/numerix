@@ -5,14 +5,25 @@ VALUE rb_cNumerixStruct;
 
 void Init_numerix_structure(VALUE outer) {
     rb_cNumerixStruct = rb_define_class_under(outer, "Structure", rb_cObject);
+
+    rb_define_method(rb_cNumerixStruct, "dup", rb_numerix_dup, 0);
     rb_define_method(rb_cNumerixStruct, "address", rb_numerix_address, 0);
     rb_define_method(rb_cNumerixStruct, "_dump", rb_numerix_dump, -1);
 
     rb_define_singleton_method(rb_cNumerixStruct, "size", rb_numerix_size, 0);
     rb_define_singleton_method(rb_cNumerixStruct, "_load", rb_numerix_load, 1);
+    rb_define_singleton_method(rb_cNumerixStruct, "unpack", rb_numerix_load, 1);
 
     rb_define_alias(rb_cNumerixStruct, "pack", "_dump");
-    rb_define_alias(rb_cNumerixStruct, "unpack", "_load");
+
+}
+
+VALUE rb_numerix_dup(VALUE self) {
+    struct RData *rdata = RDATA(self);
+    int size = rb_numerix_isize(rdata->basic.klass);
+    void *data = ruby_xmalloc(size);
+    memcpy(data, rdata->data, size);
+    return NUMERIX_WRAP(rdata->basic.klass, data);
 }
 
 VALUE rb_numerix_address(VALUE self) {
