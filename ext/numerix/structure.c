@@ -9,13 +9,60 @@ void Init_numerix_structure(VALUE outer) {
     rb_define_method(rb_cNumerixStruct, "dup", rb_numerix_dup, 0);
     rb_define_method(rb_cNumerixStruct, "address", rb_numerix_address, 0);
     rb_define_method(rb_cNumerixStruct, "_dump", rb_numerix_dump, -1);
+    rb_define_method(rb_cNumerixStruct, "[]", rb_numerix_aref, 1);
+    rb_define_method(rb_cNumerixStruct, "[]=", rb_numerix_aset, 2);
+    rb_define_method(rb_cNumerixStruct, "each", rb_numerix_each, 0);
 
     rb_define_singleton_method(rb_cNumerixStruct, "size", rb_numerix_size, 0);
     rb_define_singleton_method(rb_cNumerixStruct, "_load", rb_numerix_load, 1);
     rb_define_singleton_method(rb_cNumerixStruct, "unpack", rb_numerix_load, 1);
 
     rb_define_alias(rb_cNumerixStruct, "pack", "_dump");
+    
+    
 
+}
+
+VALUE rb_numerix_each(VALUE self) {
+    struct RData *rdata = RDATA(self);
+    int count = rb_numerix_isize(rdata->basic.klass) / sizeof(float);
+
+    volatile VALUE str = self;
+
+    RETURN_SIZED_ENUMERATOR(str, 0, 0, count);
+
+    float *flt = (float*) rdata->data;
+    for (int i = 0; i < count; i++)
+        rb_yield(DBL2NUM(flt[i]));
+
+    return str;
+}
+
+VALUE rb_numerix_aref(VALUE self, VALUE index)
+{
+    struct RData *rdata = RDATA(self);
+    int max = rb_numerix_isize(rdata->basic.klass) / sizeof(float);
+    int i = NUM2INT(index);
+
+    if (i < 0 || i >= max)
+        return Qnil;
+    
+    float *flt = (float*) rdata->data;
+    return DBL2NUM(flt[i]);
+}
+
+VALUE rb_numerix_aset(VALUE self, VALUE index, VALUE value) {
+    struct RData *rdata = RDATA(self);
+    int max = rb_numerix_isize(rdata->basic.klass) / sizeof(float);
+    int i = NUM2INT(index);
+
+    if (i >= 0 || i < max)
+    {
+        float *flt = (float*) rdata->data;
+        flt[i] = NUM2FLT(value);
+    }
+
+    return value;
 }
 
 VALUE rb_numerix_dup(VALUE self) {

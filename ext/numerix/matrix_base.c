@@ -57,7 +57,49 @@ void Init_matrix_base(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "m42=", rb_matrix4x4_m42_set, 1);
     rb_define_method(rb_cMatrix4x4, "m43=", rb_matrix4x4_m43_set, 1);
     rb_define_method(rb_cMatrix4x4, "m44=", rb_matrix4x4_m44_set, 1);
+
 }
+
+VALUE rb_matrix_base_map(VALUE self) {
+    struct RData *rdata = RDATA(self);
+    int size = 0;
+
+    if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix3x2))
+        size = sizeof(float) * 6;
+    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix4x4))
+        size = sizeof(float) * 16;
+
+    float *flt = (float*) rdata->data;
+    float *result = (float*) ruby_xmalloc(size);
+
+    int count = size / sizeof(float);
+    for (int i = 0; i < count; i++)
+    {
+        result[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
+    }
+    
+    return NUMERIX_WRAP(rdata->basic.klass, result);
+}
+
+VALUE rb_matrix_base_map_bang(VALUE self) {
+    struct RData *rdata = RDATA(self);
+
+    int count = 0;
+    if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix3x2))
+        count = 6;
+    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix4x4))
+        count = 16;
+
+    float *flt = (float*) rdata->data;
+
+    for (int i = 0; i < count; i++)
+    {
+        flt[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
+    }
+
+    return self;
+}
+
 
 VALUE rb_matrix3x2_m11(VALUE self) {
     MATRIX3X2();

@@ -15,7 +15,12 @@ module Numerix
     end
 
   end
+
+  v = Vector4.one.map! { |v| v += 4.0 }
+  puts v
+
 end
+
 
 
 
