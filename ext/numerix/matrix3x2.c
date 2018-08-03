@@ -433,7 +433,7 @@ VALUE rb_matrix3x2_determinant(VALUE self) {
     return DBL2NUM((m->m11 * m->m22) - (m->m21 * m->m12));
 }
 
-VALUE rb_matrix3x3_each_row(VALUE self) {
+VALUE rb_matrix3x2_each_row(VALUE self) {
     MATRIX3X2();
     for (int i = 0; i < 3; i++)
     {

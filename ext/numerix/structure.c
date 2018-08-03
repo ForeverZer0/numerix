@@ -3,6 +3,10 @@
 
 VALUE rb_cNumerixStruct;
 
+#if RUBY_API_VERSION_MAJOR >= 2
+VALUE rb_numerix_cFiddlePointer;
+#endif
+
 void Init_numerix_structure(VALUE outer) {
     rb_cNumerixStruct = rb_define_class_under(outer, "Structure", rb_cObject);
 
@@ -19,9 +23,37 @@ void Init_numerix_structure(VALUE outer) {
 
     rb_define_alias(rb_cNumerixStruct, "pack", "_dump");
     
-    
-
+    #if RUBY_API_VERSION_MAJOR >= 2
+    rb_require("fiddle");
+    VALUE fiddle = rb_const_get(rb_cObject, rb_intern("Fiddle"));
+    rb_numerix_cFiddlePointer = rb_const_get(fiddle, rb_intern("Pointer"));
+    rb_define_method(rb_cNumerixStruct, "ptr", rb_numerix_fiddle_ptr, 0);
+    #endif
 }
+
+#if RUBY_API_VERSION_MAJOR >= 2
+
+VALUE rb_numerix_fiddle_ptr(VALUE self) {
+    // Get basic data about the struct
+    struct RData *rdata = RDATA(self);
+    VALUE *args = xmalloc(sizeof(VALUE) * 2);
+    // Set the platform pointer-size address
+    #if SIZEOF_INTPTR_T == 4
+        args[0] = LONG2NUM((long) rdata->data);
+    #elif SIZEOF_INTPTR_T == 8
+        args[0] = LL2NUM((long long) rdata->data);
+    #else 
+        args[0] = INT2NUM(0);
+    #endif
+    // Get size of structure
+    int size = rb_numerix_isize(rdata->basic.klass);
+    args[1] = INT2NUM(size);
+    VALUE ptr = rb_class_new_instance(2, args, rb_numerix_cFiddlePointer);
+    xfree(args);
+    return ptr;
+}
+
+#endif
 
 VALUE rb_numerix_each(VALUE self) {
     struct RData *rdata = RDATA(self);

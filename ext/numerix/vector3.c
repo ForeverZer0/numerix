@@ -27,6 +27,10 @@ void Init_vector3(VALUE outer) {
     rb_define_method(rb_cVector3, "dot", rb_vector3_dot, 1);
     rb_define_method(rb_cVector3, "clamp", rb_vector3_clamp, 2);
     rb_define_method(rb_cVector3, "clamp!", rb_vector3_clamp_bang, 2);
+    rb_define_method(rb_cVector3, "cross", rb_vector3_cross, 1);
+    rb_define_method(rb_cVector3, "cross!", rb_vector3_cross_bang, 1);
+    rb_define_method(rb_cVector3, "reflect", rb_vector3_reflect, 1);
+    rb_define_method(rb_cVector3, "reflect!", rb_vector3_reflect_bang, 1);
 
     // Conversion
     rb_define_method(rb_cVector3, "to_s", rb_vector3_to_s, 0);
@@ -354,6 +358,39 @@ VALUE rb_vector3_one_p(VALUE self) {
 VALUE rb_vector3_zero_p(VALUE self) {
     VECTOR3();
     return v->x == 0.0f && v->y == 0.0f && v->z == 0.0f ? Qtrue : Qfalse;
+}
+
+VALUE rb_vector3_cross(VALUE self, VALUE other) {
+    return rb_vector3_cross_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector3_cross_bang(VALUE self, VALUE other) {
+    Vector3 *v1, *v2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+
+    v1->x = v1->y * v2->z - v1->z * v2->y;
+    v1->y = v1->z * v2->x - v1->x * v2->z;
+    v1->z = v1->x * v2->y - v1->y * v2->x;
+
+    return self;
+}
+
+VALUE rb_vector3_reflect(VALUE self, VALUE other) {
+    return rb_vector3_reflect_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector3_reflect_bang(VALUE self, VALUE other) {
+    Vector3 *v1, *v2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+
+    float dot = v1->x * v2->x + v1->y * v2->y + v1->z * v2->z;
+    v1->x = v1->x = (v2->x * dot * 2.0f);
+    v1->y = v1->y = (v2->y * dot * 2.0f);
+    v1->z = v1->z = (v2->z * dot * 2.0f);
+
+    return self;
 }
 
 static inline VALUE rb_vector3_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {

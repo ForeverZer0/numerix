@@ -3,23 +3,8 @@ require_relative 'numerix/numerix'
 
 module Numerix
 
-  if RUBY_VERSION >= '2.0'
+  ptr = Vector4.one.ptr
 
-    require 'fiddle'
-
-    class Structure
-
-      def ptr
-       Fiddle::Pointer.new(address, self.class.size)
-      end
-    end
-
-  end
-
-  Matrix4x4.identity.each_column { |r| p r }
+  p ptr.inspect
 
 end
-
-
-
-

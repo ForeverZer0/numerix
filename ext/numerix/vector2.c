@@ -27,6 +27,8 @@ void Init_vector2(VALUE outer) {
     rb_define_method(rb_cVector2, "dot", rb_vector2_dot, 1);
     rb_define_method(rb_cVector2, "clamp", rb_vector2_clamp, 2);
     rb_define_method(rb_cVector2, "clamp!", rb_vector2_clamp_bang, 2);
+    rb_define_method(rb_cVector2, "reflect", rb_vector2_reflect, 2);
+    rb_define_method(rb_cVector2, "reflect!", rb_vector2_reflect_bang, 2);
 
     // Conversion
     rb_define_method(rb_cVector2, "to_s", rb_vector2_to_s, 0);
@@ -297,6 +299,22 @@ VALUE rb_vector2_one_p(VALUE self) {
 VALUE rb_vector2_zero_p(VALUE self) {
     VECTOR2();
     return v->x == 0.0f && v->y == 0.0f ? Qtrue : Qfalse;
+}
+
+VALUE rb_vector2_reflect(VALUE self, VALUE other) {
+    return rb_vector2_reflect_s(CLASS_OF(self), self, other);
+}
+
+VALUE rb_vector2_reflect_bang(VALUE self, VALUE other) {
+    Vector2 *v1, *v2;
+    Data_Get_Struct(self, Vector2, v1);
+    Data_Get_Struct(other, Vector2, v2);
+
+    float dot = v1->x * v2->x + v1->y * v2->y;
+    v1->x = v1->x - 2.0f * dot * v2->x;
+    v1->y = v1->y - 2.0f * dot * v2->y;
+
+    return self;
 }
 
 static inline VALUE rb_vector2_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {

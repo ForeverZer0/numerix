@@ -34,6 +34,8 @@ VALUE rb_vector2_sqrt(VALUE self);
 VALUE rb_vector2_dot(VALUE self, VALUE other);
 VALUE rb_vector2_clamp(VALUE self, VALUE min, VALUE max);
 VALUE rb_vector2_clamp_bang(VALUE self, VALUE min, VALUE max);
+VALUE rb_vector2_reflect(VALUE self, VALUE other);
+VALUE rb_vector2_reflect_bang(VALUE self, VALUE other);
 
 // Conversion
 VALUE rb_vector2_to_s(VALUE self);

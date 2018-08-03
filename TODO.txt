@@ -7,6 +7,8 @@
 
 fix equality checking (consistent)
 
+Vector.create_normalized(x, y [,z, [, w]])
+
 coerce  Ruby Vector, Matrix, etc 
 
 magnitude
@@ -17,10 +19,7 @@ magnitude
 
 angle (?)
 
-reflect
-reflect!
 
-cross, cross!
 
 ** NO cross, transform_normal, or reflect for Vector4 **
 
