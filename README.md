@@ -1,4 +1,4 @@
-# Numerix
+# ![icon](logo)Numerix
 
 Numerix is a powerful and feature-rich C-extension for working with vectors and matrices. 
 
@@ -64,3 +64,5 @@ The gem is available as open source under the terms of the [MIT License](https:/
 ## Code of Conduct
 
 Everyone interacting in the Numerix project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/ForeverZer0/numerix/blob/master/CODE_OF_CONDUCT.md).
+
+[logo]: https://github.com/ForeverZer0/numerix/blob/master/extra/numerix128.png "Icon"
