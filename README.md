@@ -1,10 +1,11 @@
-# ![Numerix Icon](./extra/numerix32.png)  Numerix
+
+# ![logo](./extra/numerix32.png)  Numerix
 
 Numerix is a powerful and feature-rich Ruby C-extension for working with vectors and matrices. 
 
-The vector and matrix classes that are part of Ruby's standard library are implemented purely as Ruby code, and lack anything beyond the most basic function. Numerix strives to make working with vectors more "Ruby-like", and far exceeding Ruby's built-in implementations many times over in regards to speed and performance.
+The vector and matrix classes that are part of Ruby's standard library are implemented purely as Ruby code, and lack anything beyond the most basic function. Numerix strives to make working with vectors more "Ruby-like", and far exceeds Ruby's built-in implementations many times over in regards to speed and performance.
 
-Great care has been take to make the library "interop" friendly, where each class can easily be passed as a "pointer" or binary string for interop with native libraries, using Ruby's `Fiddle`, FFI, or even the legacy `Win32API`. Numerix has been built from the ground-up for Ruby, not playing middle-man between Ruby and an existing library, and is optimized specifically for it, with focus on speed and a robust collection of functionality.
+Great care has been take to make the library "interop" friendly, where each class can easily be passed as a "pointer" or binary string for interop with native libraries, using Ruby's `Fiddle`, FFI, or even Ruby's legacy `Win32API`. Numerix has been built from the ground-up for Ruby, not playing middle-man between Ruby and an existing library, and is optimized specifically for it, with focus on speed and a robust collection of functionality.
 
 
 ## Installation

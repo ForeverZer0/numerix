@@ -44,11 +44,16 @@ void Init_vector_base(VALUE outer) {
     rb_define_method(rb_cQuaternion, "z=", rb_vector_base_z_set, 1);
     rb_define_method(rb_cQuaternion, "w=", rb_vector_base_w_set, 1);  
 
-    rb_define_method(rb_cVectorBase, "map", rb_vector_base_map, 0);
-    rb_define_method(rb_cVectorBase, "map!", rb_vector_base_map_bang, 0);
+    rb_define_method(rb_cVectorBase, "map2", rb_vector_base_map, 0);
+    rb_define_method(rb_cVectorBase, "map2!", rb_vector_base_map_bang, 0);
+    rb_define_alias(rb_cVectorBase, "collect2", "map2");
+    rb_define_alias(rb_cVectorBase, "collect2!", "map2!");
+    
+    rb_define_method(rb_cVectorBase, "**", rb_vector_base_pow, 1);
+    rb_define_singleton_method(rb_cVectorBase, "pow", rb_vector_base_pow_s, 2);
 
-    rb_define_alias(rb_cVectorBase, "collect", "map");
-    rb_define_alias(rb_cVectorBase, "collect!", "map!");
+
+    rb_include_module(rb_cVectorBase, rb_mEnumerable);
 }
 
 VALUE rb_vector_base_map(VALUE self) {
@@ -137,4 +142,27 @@ VALUE rb_vector_base_w_set(VALUE self, VALUE value) {
     VECTOR4();
     v->w = NUM2FLT(value);
     return value;
+}
+
+VALUE rb_vector_base_pow(VALUE self, VALUE exponent) {
+    return rb_vector_base_pow_s(CLASS_OF(self), self, exponent);
+}
+
+static inline VALUE rb_vector_base_pow_s(VALUE klass, VALUE vector, VALUE exponent) {
+    int count = 0;
+    if (NUMERIX_INHERIT_P(klass, rb_cVector2))
+        count = 2;
+    else if (NUMERIX_INHERIT_P(klass, rb_cVector3))
+        count = 3;
+    else if (NUMERIX_INHERIT_P(klass, rb_cVector4))
+        count = 4;
+    
+    float *v = RDATA(vector)->data;
+    float *result = ruby_xmalloc(count * sizeof(float));
+    float e = fabsf(NUM2FLT(exponent));
+
+    for (int i = 0; i < count; i++)
+        result[i] = powf(fabsf(v[i]), e);
+
+    return NUMERIX_WRAP(klass, result);
 }

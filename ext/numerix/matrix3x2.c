@@ -14,7 +14,7 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_method(rb_cMatrix3x2, "column", rb_matrix3x2_column, 1);
     rb_define_method(rb_cMatrix3x2, "each_row", rb_matrix3x2_each_row, 0);
     rb_define_method(rb_cMatrix3x2, "each_column", rb_matrix3x2_each_column, 0);
-
+    
     // Conversion
     rb_define_method(rb_cMatrix3x2, "to_s", rb_matrix3x2_to_s, 0);
     rb_define_method(rb_cMatrix3x2, "to_a", rb_matrix3x2_to_a, 0);
@@ -26,6 +26,8 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_method(rb_cMatrix3x2, "-", rb_matrix3x2_subtract, 1);
     rb_define_method(rb_cMatrix3x2, "*", rb_matrix3x2_multiply, 1);
     rb_define_method(rb_cMatrix3x2, "==", rb_matrix3x2_equal, 1);
+    rb_define_method(rb_cMatrix3x2, "[]", rb_matrix3x2_aref, -1);
+    rb_define_method(rb_cMatrix3x2, "[]=", rb_matrix3x2_aset, -1);
 
     // Class
     rb_define_singleton_method(rb_cMatrix3x2, "identity", rb_matrix3x2_identity, 0);
@@ -61,7 +63,7 @@ VALUE rb_matrix3x2_initialize(int argc, VALUE *argv, VALUE self) {
         m->m32 = NUM2FLT(argv[5]);
     }
     else if (argc != 0)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 6)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 6)", argc);
     
     return Qnil;
 }
@@ -118,7 +120,7 @@ VALUE rb_matrix3x2_create_translation(int argc, VALUE *argv, VALUE klass) {
         result->m32 = NUM2FLT(argv[1]);
     }
     else
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
 
     result->m11 = 1.0f;
     result->m12 = 0.0f;
@@ -314,7 +316,7 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
 
         }
         default:
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2, 3)", argc);
+            rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2, 3)", argc);
     }
 
     return NUMERIX_WRAP(klass, result);
@@ -322,7 +324,7 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
 
 VALUE rb_matrix3x2_create_skew(int argc, VALUE *argv, VALUE klass) {
     if (argc != 2 && argc != 3)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 2, 3)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 2, 3)", argc);
 
     Matrix3x2 *result = ALLOC(Matrix3x2);
 
@@ -352,7 +354,7 @@ VALUE rb_matrix3x2_create_skew(int argc, VALUE *argv, VALUE klass) {
 
 VALUE rb_matrix3x2_create_rotation(int argc, VALUE *argv, VALUE klass) {
     if (argc != 1 && argc != 2)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2)", argc); 
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc); 
 
     Matrix3x2 *result = ALLOC(Matrix3x2);
     float radians = remainderf(NUM2FLT(argv[0]), NUMERIX_PI * 2.0f);
@@ -452,6 +454,43 @@ VALUE rb_matrix3x2_each_column(VALUE self) {
     }
     return self;
 }
+
+VALUE rb_matrix3x2_aref(int argc, VALUE *argv, VALUE self) {
+    if (argc == 1)
+    {
+        return rb_call_super(1, argv);
+    }
+    else if (argc == 2)
+    {
+        int r = NUM2INT(argv[0]);
+        int c = NUM2INT(argv[1]);
+        if (r < 0 || r > 2 || c < 0 || c > 1)
+            return Qnil;
+        VALUE arg = INT2NUM(r + (c * 4));
+        return rb_call_super(1, &arg);
+    }
+    rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
+    return Qnil;
+}
+
+VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self) {
+    if (argc == 2)
+    {
+        return rb_call_super(2, argv); 
+    }
+    else if (argc == 3)
+    {
+        int r = NUM2INT(argv[0]);
+        int c = NUM2INT(argv[1]);
+        if (r < 0 || r > 2 || c < 0 || c > 1)
+            return Qnil;
+        argv[1] = INT2NUM(r + (c * 3));
+        return rb_call_super(2, &argv[1]);
+    }
+    rb_raise(rb_eArgError, "wrong number of arguments (%d for 2, 3)", argc);
+    return Qnil; 
+}
+
 
 static inline VALUE rb_matrix3x2_invert_s(VALUE klass, VALUE matrix) {
     Matrix3x2 *m, *result;

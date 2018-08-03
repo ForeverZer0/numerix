@@ -29,6 +29,8 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "*", rb_matrix4x4_mulitiply, 1);
     rb_define_method(rb_cMatrix4x4, "-@", rb_matrix4x4_negate, 0);
     rb_define_method(rb_cMatrix4x4, "==", rb_matrix4x4_equal, 1);
+    rb_define_method(rb_cMatrix4x4, "[]", rb_matrix4x4_aref, -1);
+    rb_define_method(rb_cMatrix4x4, "[]=", rb_matrix4x4_aset, -1);
 
     // // Class
     rb_define_singleton_method(rb_cMatrix4x4, "identity", rb_matrix4x4_identity, 0);
@@ -149,7 +151,7 @@ VALUE rb_matrix4x4_initialize(int argc, VALUE *argv, VALUE self) {
         }
     }
     else if (argc != 0)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 16)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 16)", argc);
 
     return Qnil;
 }
@@ -433,6 +435,43 @@ VALUE rb_matrix4x4_each_column(VALUE self) {
     return self;
 }
 
+VALUE rb_matrix4x4_aref(int argc, VALUE *argv, VALUE self) {
+    if (argc == 1)
+    {
+        return rb_call_super(1, argv);
+    }
+    else if (argc == 2)
+    {
+        int r = NUM2INT(argv[0]);
+        int c = NUM2INT(argv[1]);
+        if (r < 0 || r > 3 || c < 0 || c > 3)
+            return Qnil;
+        argv[0] = INT2NUM(r + (c * 4));
+        return rb_call_super(1, argv);
+    }
+    rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
+    return Qnil;
+}
+
+VALUE rb_matrix4x4_aset(int argc, VALUE *argv, VALUE self) {
+    if (argc == 2)
+    {
+        return rb_call_super(2, argv); 
+    }
+    else if (argc == 3)
+    {
+        int r = NUM2INT(argv[0]);
+        int c = NUM2INT(argv[1]);
+        if (r < 0 || r > 3 || c < 0 || c > 3)
+            return Qnil;
+        argv[1] = INT2NUM(r + (c * 4));
+        return rb_call_super(2, &argv[1]);
+    }
+    rb_raise(rb_eArgError, "wrong number of arguments (%d for 2, 3)", argc);
+    return Qnil; 
+}
+
+
 VALUE rb_matrix4x4_identity(VALUE klass) {
     Matrix4x4 *m = ALLOC(Matrix4x4);
     m->m11 = 1.0f;
@@ -620,7 +659,7 @@ VALUE rb_matrix4x4_create_translation(int argc, VALUE *argv, VALUE klass) {
         z = NUM2FLT(argv[2]);
     }
     else
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 3)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 3)", argc);
 
     Matrix4x4 *result = ALLOC(Matrix4x4);
     result->m11 = 1.0f;
@@ -707,7 +746,7 @@ VALUE rb_matrix4x4_create_scale(int argc, VALUE *argv, VALUE klass) {
         }
         default:
         {
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2, 3, 4)", argc);
+            rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2, 3, 4)", argc);
             break;
         }
     }
@@ -734,7 +773,7 @@ VALUE rb_matrix4x4_create_scale(int argc, VALUE *argv, VALUE klass) {
 
 VALUE rb_matrix4x4_create_rotation_x(int argc, VALUE *argv, VALUE klass) {
     if (argc != 1 && argc != 2)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
 
     float radians = NUM2FLT(argv[0]);
     float c = cosf(radians);
@@ -775,7 +814,7 @@ VALUE rb_matrix4x4_create_rotation_x(int argc, VALUE *argv, VALUE klass) {
 
 VALUE rb_matrix4x4_create_rotation_y(int argc, VALUE *argv, VALUE klass) {
     if (argc != 1 && argc != 2)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
 
     float radians = NUM2FLT(argv[0]);
     float c = cosf(radians);
@@ -816,7 +855,7 @@ VALUE rb_matrix4x4_create_rotation_y(int argc, VALUE *argv, VALUE klass) {
 
 VALUE rb_matrix4x4_create_rotation_z(int argc, VALUE *argv, VALUE klass) {
     if (argc != 1 && argc != 2)
-        rb_raise(rb_eArgError, "wrong number of arguments (%d for 1, 2)", argc);
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
 
     float radians = NUM2FLT(argv[0]);
     float c = cosf(radians);

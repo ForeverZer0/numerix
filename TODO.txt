@@ -11,7 +11,12 @@ Vector.create_normalized(x, y [,z, [, w]])
 
 coerce  Ruby Vector, Matrix, Pointer, etc 
 
-magnitude
+
+map for matrixbase
+
+
+Vectors[index]
+
 
 [equiv, self]
 

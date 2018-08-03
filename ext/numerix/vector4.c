@@ -45,6 +45,10 @@ void Init_vector4(VALUE outer) {
     rb_define_method(rb_cVector4, "==", rb_vector4_equal, 1);
     rb_define_method(rb_cVector4, "-@", rb_vector4_negate, 0);
 
+    // Alias
+    rb_define_alias(rb_cVector4, "magnitude", "length");
+    rb_define_alias(rb_cVector4, "elements", "to_a");
+
     // Singleton Methods
     rb_define_singleton_method(rb_cVector4, "zero", rb_vector4_alloc, 0);
     rb_define_singleton_method(rb_cVector4, "one", rb_vector4_one, 0);
@@ -141,7 +145,7 @@ VALUE rb_vector4_initialize(int argc, VALUE *argv, VALUE self) {
             break;
         }
         default:
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 1, 2, 3, 4)", argc);
+            rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 1, 2, 3, 4)", argc);
             break;
 
     }
@@ -768,4 +772,3 @@ static inline VALUE rb_vector4_negate_s(VALUE klass, VALUE vec) {
 
     return NUMERIX_WRAP(klass, result);
 }
-

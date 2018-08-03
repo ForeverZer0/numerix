@@ -75,7 +75,7 @@ VALUE rb_quaternion_initialize(int argc, VALUE *argv, VALUE self) {
             break;
         }
         default:
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 2, 4)", argc);
+            rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 2, 4)", argc);
             break;
     }
     return Qnil;

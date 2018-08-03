@@ -67,4 +67,10 @@ VALUE rb_matrix4x4_m42_set(VALUE self, VALUE value);
 VALUE rb_matrix4x4_m43_set(VALUE self, VALUE value);
 VALUE rb_matrix4x4_m44_set(VALUE self, VALUE value);
 
+VALUE rb_matrix_base_map(VALUE self);
+VALUE rb_matrix_base_map_bang(VALUE self);
+VALUE rb_matrix_base_pow(VALUE self, VALUE exponent);
+
+static inline VALUE rb_matrix_base_pow_s(VALUE klass, VALUE matrix, VALUE exponent);
+
 #endif /* NUMERIX_MATRIX_BASE_H */

@@ -26,6 +26,8 @@ VALUE rb_matrix3x2_row(VALUE self, VALUE row);
 VALUE rb_matrix3x2_column(VALUE self, VALUE column);
 VALUE rb_matrix3x2_each_row(VALUE self);
 VALUE rb_matrix3x2_each_column(VALUE self);
+VALUE rb_matrix3x2_aref(int argc, VALUE *argv, VALUE self);
+VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self);
 
 // Conversion
 VALUE rb_matrix3x2_to_s(VALUE self);

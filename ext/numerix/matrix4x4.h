@@ -40,6 +40,8 @@ VALUE rb_matrix4x4_row(VALUE self, VALUE row);
 VALUE rb_matrix4x4_column(VALUE self, VALUE column);
 VALUE rb_matrix4x4_each_row(VALUE self);
 VALUE rb_matrix4x4_each_column(VALUE self);
+VALUE rb_matrix4x4_aref(int argc, VALUE *argv, VALUE self);
+VALUE rb_matrix4x4_aset(int argc, VALUE *argv, VALUE self);
 
 // Conversion
 VALUE rb_matrix4x4_to_s(VALUE self);

@@ -49,6 +49,10 @@ void Init_vector3(VALUE outer) {
     rb_define_method(rb_cVector3, "==", rb_vector3_equal, 1);
     rb_define_method(rb_cVector3, "-@", rb_vector3_negate, 0);
 
+    // Alias
+    rb_define_alias(rb_cVector3, "magnitude", "length");
+    rb_define_alias(rb_cVector3, "elements", "to_a");
+
     // Singleton Methods
     rb_define_singleton_method(rb_cVector3, "zero", rb_vector3_alloc, 0);
     rb_define_singleton_method(rb_cVector3, "one", rb_vector3_one, 0);
@@ -126,7 +130,7 @@ VALUE rb_vector3_initialize(int argc, VALUE *argv, VALUE self) {
             break;
         }
         default:
-            rb_raise(rb_eArgError, "wrong number of arguments (%d for 0, 1, 2, 3)", argc);
+            rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 1, 2, 3)", argc);
             break;
 
     }
