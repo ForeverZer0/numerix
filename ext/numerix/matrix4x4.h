@@ -31,12 +31,21 @@ VALUE rb_matrix4x4_identity_p(VALUE self);
 VALUE rb_matrix4x4_translation(VALUE self);
 VALUE rb_matrix4x4_translation_set(VALUE self, VALUE value);
 VALUE rb_matrix4x4_determinant(VALUE self);
-VALUE rb_matrix4x4_to_s(VALUE self);
 VALUE rb_matrix4x4_add(VALUE self, VALUE other);
 VALUE rb_matrix4x4_subtract(VALUE self, VALUE other);
 VALUE rb_matrix4x4_mulitiply(VALUE self, VALUE other);
 VALUE rb_matrix4x4_negate(VALUE self);
 VALUE rb_matrix4x4_equal(VALUE self, VALUE other);
+VALUE rb_matrix4x4_row(VALUE self, VALUE row);
+VALUE rb_matrix4x4_column(VALUE self, VALUE column);
+VALUE rb_matrix4x4_each_row(VALUE self);
+VALUE rb_matrix4x4_each_column(VALUE self);
+
+// Conversion
+VALUE rb_matrix4x4_to_s(VALUE self);
+VALUE rb_matrix4x4_to_a(VALUE self);
+VALUE rb_matrix4x4_to_h(VALUE self);
+// TODO to_mat3x2
 
 // // Class
 VALUE rb_matrix4x4_identity(VALUE klass);

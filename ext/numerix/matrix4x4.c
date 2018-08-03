@@ -12,7 +12,16 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "translation", rb_matrix4x4_translation, 0);
     rb_define_method(rb_cMatrix4x4, "translation=", rb_matrix4x4_translation_set, 1);
     rb_define_method(rb_cMatrix4x4, "determinant", rb_matrix4x4_determinant, 0);
+    rb_define_method(rb_cMatrix4x4, "row", rb_matrix4x4_row, 1);
+    rb_define_method(rb_cMatrix4x4, "column", rb_matrix4x4_column, 1);
+    rb_define_method(rb_cMatrix4x4, "each_row", rb_matrix4x4_each_row, 0);
+    rb_define_method(rb_cMatrix4x4, "each_column", rb_matrix4x4_each_column, 0);
+
+    // Conversion
     rb_define_method(rb_cMatrix4x4, "to_s", rb_matrix4x4_to_s, 0);
+    rb_define_method(rb_cMatrix4x4, "to_a", rb_matrix4x4_to_a, 0);
+    rb_define_method(rb_cMatrix4x4, "to_h", rb_matrix4x4_to_h, 0);
+    // to_mat3
     
     // Operators
     rb_define_method(rb_cMatrix4x4, "+", rb_matrix4x4_add, 1);
@@ -255,6 +264,173 @@ VALUE rb_matrix4x4_equal(VALUE self, VALUE other) {
            FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) && FLT_EQUAL(m1->m23, m2->m23) && FLT_EQUAL(m1->m24, m2->m24) &&
            FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) && FLT_EQUAL(m1->m33, m2->m33) && FLT_EQUAL(m1->m34, m2->m34) &&
            FLT_EQUAL(m1->m41, m2->m41) && FLT_EQUAL(m1->m42, m2->m42) && FLT_EQUAL(m1->m43, m2->m43) && FLT_EQUAL(m1->m44, m2->m44) ? Qtrue : Qfalse;
+}
+
+VALUE rb_matrix4x4_to_a(VALUE self) {
+    MATRIX4X4();
+    VALUE array = rb_ary_new_capa(4);
+    // Row 1
+    VALUE r1 = rb_ary_new_capa(4);
+    rb_ary_store(r1, 0, DBL2NUM(m->m11));
+    rb_ary_store(r1, 1, DBL2NUM(m->m12));
+    rb_ary_store(r1, 2, DBL2NUM(m->m13));
+    rb_ary_store(r1, 3, DBL2NUM(m->m14));
+    rb_ary_push(array, r1);
+    // Row 2
+    VALUE r2 = rb_ary_new_capa(4);
+    rb_ary_store(r2, 0, DBL2NUM(m->m21));
+    rb_ary_store(r2, 1, DBL2NUM(m->m22));
+    rb_ary_store(r2, 2, DBL2NUM(m->m23));
+    rb_ary_store(r2, 3, DBL2NUM(m->m24));
+    rb_ary_push(array, r2);
+    // Row 3
+    VALUE r3 = rb_ary_new_capa(4);
+    rb_ary_store(r3, 0, DBL2NUM(m->m31));
+    rb_ary_store(r3, 1, DBL2NUM(m->m32));
+    rb_ary_store(r3, 2, DBL2NUM(m->m33));
+    rb_ary_store(r3, 3, DBL2NUM(m->m34));
+    rb_ary_push(array, r3);
+    // Row 4
+    VALUE r4 = rb_ary_new_capa(4);
+    rb_ary_store(r4, 0, DBL2NUM(m->m41));
+    rb_ary_store(r4, 1, DBL2NUM(m->m42));
+    rb_ary_store(r4, 2, DBL2NUM(m->m43));
+    rb_ary_store(r4, 3, DBL2NUM(m->m44));
+    rb_ary_push(array, r4);
+    return array;
+}
+
+VALUE rb_matrix4x4_row(VALUE self, VALUE row) {
+    MATRIX4X4();
+    VALUE args = rb_ary_new_capa(4);
+    int r = NUM2INT(row);
+    switch (r)
+    {
+        case 0:
+        {
+            rb_ary_push(args, DBL2NUM(m->m11));
+            rb_ary_push(args, DBL2NUM(m->m12));
+            rb_ary_push(args, DBL2NUM(m->m13));
+            rb_ary_push(args, DBL2NUM(m->m14));
+            break;
+        }
+        case 1:
+        {
+            rb_ary_push(args, DBL2NUM(m->m21));
+            rb_ary_push(args, DBL2NUM(m->m22));
+            rb_ary_push(args, DBL2NUM(m->m23));
+            rb_ary_push(args, DBL2NUM(m->m24));
+            break;
+        }
+        case 2:
+        {
+            rb_ary_push(args, DBL2NUM(m->m31));
+            rb_ary_push(args, DBL2NUM(m->m32));
+            rb_ary_push(args, DBL2NUM(m->m33));
+            rb_ary_push(args, DBL2NUM(m->m34));
+            break;
+        }
+        case 3:
+        {
+            rb_ary_push(args, DBL2NUM(m->m41));
+            rb_ary_push(args, DBL2NUM(m->m42));
+            rb_ary_push(args, DBL2NUM(m->m43));
+            rb_ary_push(args, DBL2NUM(m->m44));
+            break;
+        }
+        default:
+            break;
+    }
+    return args;
+}
+
+VALUE rb_matrix4x4_column(VALUE self, VALUE column) {
+    MATRIX4X4();
+    VALUE args = rb_ary_new_capa(4);
+    int c = NUM2INT(column);
+    switch (c)
+    {
+        case 0:
+        {
+            rb_ary_push(args, DBL2NUM(m->m11));
+            rb_ary_push(args, DBL2NUM(m->m21));
+            rb_ary_push(args, DBL2NUM(m->m31));
+            rb_ary_push(args, DBL2NUM(m->m41));
+            break;
+        }
+        case 1:
+        {
+            rb_ary_push(args, DBL2NUM(m->m12));
+            rb_ary_push(args, DBL2NUM(m->m22));
+            rb_ary_push(args, DBL2NUM(m->m32));
+            rb_ary_push(args, DBL2NUM(m->m42));
+            break;
+        }
+        case 2:
+        {
+            rb_ary_push(args, DBL2NUM(m->m13));
+            rb_ary_push(args, DBL2NUM(m->m23));
+            rb_ary_push(args, DBL2NUM(m->m33));
+            rb_ary_push(args, DBL2NUM(m->m43));
+            break;
+        }
+        case 3:
+        {
+            rb_ary_push(args, DBL2NUM(m->m14));
+            rb_ary_push(args, DBL2NUM(m->m24));
+            rb_ary_push(args, DBL2NUM(m->m34));
+            rb_ary_push(args, DBL2NUM(m->m44));
+            break;
+        }
+        default:
+            break;
+    }
+    return args;
+}
+
+VALUE rb_matrix4x4_to_h(VALUE self) {
+    MATRIX4X4();
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("m11")), DBL2NUM(m->m11));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m12")), DBL2NUM(m->m12));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m13")), DBL2NUM(m->m13));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m14")), DBL2NUM(m->m14));
+
+    rb_hash_aset(hash, ID2SYM(rb_intern("m21")), DBL2NUM(m->m21));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m22")), DBL2NUM(m->m22));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m23")), DBL2NUM(m->m23));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m24")), DBL2NUM(m->m24));
+
+    rb_hash_aset(hash, ID2SYM(rb_intern("m31")), DBL2NUM(m->m31));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m32")), DBL2NUM(m->m32));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m33")), DBL2NUM(m->m33));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m34")), DBL2NUM(m->m34));
+
+    rb_hash_aset(hash, ID2SYM(rb_intern("m41")), DBL2NUM(m->m41));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m42")), DBL2NUM(m->m42));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m43")), DBL2NUM(m->m43));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m44")), DBL2NUM(m->m44));
+    return hash;
+}
+
+VALUE rb_matrix4x4_each_row(VALUE self) {
+    MATRIX4X4();
+    for (int i = 0; i < 4; i++)
+    {
+        VALUE index = INT2NUM(i);
+        rb_yield(rb_matrix4x4_row(self, index));
+    }
+    return self;
+}
+
+VALUE rb_matrix4x4_each_column(VALUE self) {
+    MATRIX4X4();
+    for (int i = 0; i < 4; i++)
+    {
+        VALUE index = INT2NUM(i);
+        rb_yield(rb_matrix4x4_column(self, index));
+    }
+    return self;
 }
 
 VALUE rb_matrix4x4_identity(VALUE klass) {

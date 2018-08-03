@@ -10,7 +10,15 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_method(rb_cMatrix3x2, "translation", rb_matrix3x2_translation, 0);
     rb_define_method(rb_cMatrix3x2, "translation=", rb_matrix3x2_translation_set, 1);
     rb_define_method(rb_cMatrix3x2, "determinant", rb_matrix3x2_determinant, 0);
+    rb_define_method(rb_cMatrix3x2, "row", rb_matrix3x2_row, 1);
+    rb_define_method(rb_cMatrix3x2, "column", rb_matrix3x2_column, 1);
+    rb_define_method(rb_cMatrix3x2, "each_row", rb_matrix3x2_each_row, 0);
+    rb_define_method(rb_cMatrix3x2, "each_column", rb_matrix3x2_each_column, 0);
+
+    // Conversion
     rb_define_method(rb_cMatrix3x2, "to_s", rb_matrix3x2_to_s, 0);
+    rb_define_method(rb_cMatrix3x2, "to_a", rb_matrix3x2_to_a, 0);
+    rb_define_method(rb_cMatrix3x2, "to_h", rb_matrix3x2_to_h, 0);
 
     // Operators
     rb_define_method(rb_cMatrix3x2, "-@", rb_matrix3x2_negate, 0);
@@ -147,9 +155,91 @@ VALUE rb_matrix3x2_equal(VALUE self, VALUE other) {
            FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) ? Qtrue : Qfalse;
 }
 
+VALUE rb_matrix3x2_row(VALUE self, VALUE row) {
+    MATRIX3X2();
+    VALUE args = rb_ary_new_capa(4);
+    int r = NUM2INT(row);
+    switch (r)
+    {
+        case 0:
+        {
+            rb_ary_push(args, DBL2NUM(m->m11));
+            rb_ary_push(args, DBL2NUM(m->m12));
+            break;
+        }
+        case 1:
+        {
+            rb_ary_push(args, DBL2NUM(m->m21));
+            rb_ary_push(args, DBL2NUM(m->m22));
+            break;
+        }
+        case 2:
+        {
+            rb_ary_push(args, DBL2NUM(m->m31));
+            rb_ary_push(args, DBL2NUM(m->m32));
+            break;
+        }
+        default:
+            break;
+    }
+    return args;
+}
+
+VALUE rb_matrix3x2_column(VALUE self, VALUE column) {
+    MATRIX3X2();
+    VALUE args = rb_ary_new_capa(3);
+    int c = NUM2INT(column);
+    if (c == 0)
+    {
+        rb_ary_push(args, DBL2NUM(m->m11));
+        rb_ary_push(args, DBL2NUM(m->m21));
+        rb_ary_push(args, DBL2NUM(m->m31));
+    }
+    else if (c == 1)
+    {
+        rb_ary_push(args, DBL2NUM(m->m12));
+        rb_ary_push(args, DBL2NUM(m->m22));
+        rb_ary_push(args, DBL2NUM(m->m32));
+    }
+    return args; 
+}
+
 VALUE rb_matrix3x2_to_s(VALUE self) {
     MATRIX3X2();
     return rb_sprintf("{{%f, %f}, {%f, %f}, {%f, %f}}", m->m11, m->m12, m->m21, m->m22, m->m31, m->m32);
+}
+
+VALUE rb_matrix3x2_to_a(VALUE self) {
+    MATRIX3X2();
+    VALUE array = rb_ary_new_capa(3);
+    // Row 1
+    VALUE r1 = rb_ary_new_capa(2);
+    rb_ary_store(r1, 0, DBL2NUM(m->m11));
+    rb_ary_store(r1, 1, DBL2NUM(m->m12));
+    rb_ary_push(array, r1);
+    // Row 2
+    VALUE r2 = rb_ary_new_capa(2);
+    rb_ary_store(r2, 0, DBL2NUM(m->m21));
+    rb_ary_store(r2, 1, DBL2NUM(m->m22));
+    rb_ary_push(array, r2);
+    // Row 3
+    VALUE r3 = rb_ary_new_capa(2);
+    rb_ary_store(r3, 0, DBL2NUM(m->m31));
+    rb_ary_store(r3, 1, DBL2NUM(m->m32));
+    rb_ary_push(array, r3);
+    return array;
+}
+
+VALUE rb_matrix3x2_to_h(VALUE self) {
+    MATRIX3X2();
+    VALUE hash = rb_hash_new();
+    rb_hash_aset(hash, ID2SYM(rb_intern("m11")), DBL2NUM(m->m11));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m12")), DBL2NUM(m->m12));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m21")), DBL2NUM(m->m21));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m22")), DBL2NUM(m->m22));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m31")), DBL2NUM(m->m31));
+    rb_hash_aset(hash, ID2SYM(rb_intern("m32")), DBL2NUM(m->m32));
+    return hash;
 }
 
 VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
@@ -341,6 +431,26 @@ VALUE rb_matrix3x2_determinant(VALUE self) {
     //
     // Collapse out the constants and oh look, this is just a 2x2 determinant!
     return DBL2NUM((m->m11 * m->m22) - (m->m21 * m->m12));
+}
+
+VALUE rb_matrix3x3_each_row(VALUE self) {
+    MATRIX3X2();
+    for (int i = 0; i < 3; i++)
+    {
+        VALUE index = INT2NUM(i);
+        rb_yield(rb_matrix3x2_row(self, index));
+    }
+    return self;
+}
+
+VALUE rb_matrix3x2_each_column(VALUE self) {
+    MATRIX3X2();
+    for (int i = 0; i < 2; i++)
+    {
+        VALUE index = INT2NUM(i);
+        rb_yield(rb_matrix3x2_column(self, index));
+    }
+    return self;
 }
 
 static inline VALUE rb_matrix3x2_invert_s(VALUE klass, VALUE matrix) {

@@ -16,8 +16,7 @@ module Numerix
 
   end
 
-  v = Vector4.one.map! { |v| v += 4.0 }
-  puts v
+  Matrix4x4.identity.each_column { |r| p r }
 
 end
 

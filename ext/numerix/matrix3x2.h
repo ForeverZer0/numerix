@@ -22,7 +22,15 @@ VALUE rb_matrix3x2_add(VALUE self, VALUE other);
 VALUE rb_matrix3x2_subtract(VALUE self, VALUE other);
 VALUE rb_matrix3x2_multiply(VALUE self, VALUE other);
 VALUE rb_matrix3x2_equal(VALUE self, VALUE other);
+VALUE rb_matrix3x2_row(VALUE self, VALUE row);
+VALUE rb_matrix3x2_column(VALUE self, VALUE column);
+VALUE rb_matrix3x2_each_row(VALUE self);
+VALUE rb_matrix3x2_each_column(VALUE self);
+
+// Conversion
 VALUE rb_matrix3x2_to_s(VALUE self);
+VALUE rb_matrix3x2_to_a(VALUE self);
+VALUE rb_matrix3x2_to_h(VALUE self);
 
 // Class
 VALUE rb_matrix3x2_identity(VALUE klass);
