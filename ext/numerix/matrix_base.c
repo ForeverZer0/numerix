@@ -108,7 +108,6 @@ VALUE rb_matrix_base_map_bang(VALUE self) {
     return self;
 }
 
-
 VALUE rb_matrix3x2_m11(VALUE self) {
     MATRIX3X2();
     return DBL2NUM(m->m11);

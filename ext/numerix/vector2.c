@@ -54,6 +54,7 @@ void Init_vector2(VALUE outer) {
     rb_define_singleton_method(rb_cVector2, "one", rb_vector2_one, 0);
     rb_define_singleton_method(rb_cVector2, "unit_x", rb_vector2_unit_x, 0);
     rb_define_singleton_method(rb_cVector2, "unit_y", rb_vector2_unit_y, 0);
+    rb_define_singleton_method(rb_cVector2, "create_norm", rb_vector2_create_norm, 2);
     rb_define_singleton_method(rb_cVector2, "distance", rb_vector2_distance_s, 2);
     rb_define_singleton_method(rb_cVector2, "distance_squared", rb_vector2_distance_squared_s, 2);
     rb_define_singleton_method(rb_cVector2, "normalize", rb_vector2_normalize_s, 1);
@@ -617,3 +618,14 @@ static inline VALUE rb_vector2_negate_s(VALUE klass, VALUE vec) {
     return NUMERIX_WRAP(klass, result);
 }
 
+VALUE rb_vector2_create_norm(VALUE klass, VALUE x, VALUE y) {
+    Vector2 *v = ALLOC(Vector2);
+    float vx = NUM2FLT(x);
+    float vy = NUM2FLT(y);
+
+    float inv = 1.0f / sqrtf(vx * vx + vy * vy);
+    v->x = vx * inv;
+    v->y = vy * inv;
+
+    return NUMERIX_WRAP(klass, v);
+}

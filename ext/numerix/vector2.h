@@ -48,6 +48,7 @@ VALUE rb_vector2_to_vec4(VALUE self);
 VALUE rb_vector2_one(VALUE klass);
 VALUE rb_vector2_unit_x(VALUE klass);
 VALUE rb_vector2_unit_y(VALUE klass);
+VALUE rb_vector2_create_norm(VALUE klass, VALUE x, VALUE y);
 static inline VALUE rb_vector2_distance_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector2_distance_squared_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector2_normalize_s(VALUE klass, VALUE vector2);

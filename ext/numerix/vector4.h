@@ -50,6 +50,7 @@ VALUE rb_vector4_unit_x(VALUE klass);
 VALUE rb_vector4_unit_y(VALUE klass);
 VALUE rb_vector4_unit_z(VALUE klass);
 VALUE rb_vector4_unit_w(VALUE klass);
+VALUE rb_vector4_create_norm(VALUE klass, VALUE x, VALUE y, VALUE z, VALUE w);
 static inline VALUE rb_vector4_distance_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector4_distance_squared_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector4_normalize_s(VALUE klass, VALUE vector4);

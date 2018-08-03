@@ -1,9 +1,6 @@
 
 - Add instance methods (pure, destructive) to each class where only class methods exist
-- Add each methods to appropriate classes?
-- To Fiddle::Pointer (in Ruby code)
 
-- one? zero?  one zero
 
 fix equality checking (consistent)
 
@@ -11,11 +8,6 @@ Vector.create_normalized(x, y [,z, [, w]])
 
 coerce  Ruby Vector, Matrix, Pointer, etc 
 
-
-map for matrixbase
-
-
-Vectors[index]
 
 
 [equiv, self]
