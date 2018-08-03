@@ -1,4 +1,4 @@
-# ![icon](https://github.com/ForeverZer0/numerix/blob/master/extra/numerix128.png)Numerix
+# Numerix
 
 Numerix is a powerful and feature-rich C-extension for working with vectors and matrices. 
 
