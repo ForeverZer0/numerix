@@ -1,10 +1,10 @@
-# Numerix
+# ![Numerix Icon](./extra/numerix32.png)  Numerix
 
-Numerix is a powerful and feature-rich C-extension for working with vectors and matrices. 
+Numerix is a powerful and feature-rich Ruby C-extension for working with vectors and matrices. 
 
-The vector and matrix classes that are part of Ruby's standard library are implemented purely as Ruby code, and lack anything beyond the most basic functions. Numerix strives to make working with vectors more "Ruby-like", and far exceeding Ruby's built-in functions many times over in regards to speed and performance.
+The vector and matrix classes that are part of Ruby's standard library are implemented purely as Ruby code, and lack anything beyond the most basic function. Numerix strives to make working with vectors more "Ruby-like", and far exceeding Ruby's built-in implementations many times over in regards to speed and performance.
 
-Great care has been take to make the library "interop" friendly, where each class can easily be passed as "pointer" or binary block of code for interop with languages using that also accept "pointer" types, whether it be Ruby's `Fiddle` library, or binary strings. Numerix has been built from the ground up specifically for Ruby, and is optimized specifically for it, with focus on speed and function.
+Great care has been take to make the library "interop" friendly, where each class can easily be passed as a "pointer" or binary string for interop with native libraries, using Ruby's `Fiddle`, FFI, or even the legacy `Win32API`. Numerix has been built from the ground-up for Ruby, not playing middle-man between Ruby and an existing library, and is optimized specifically for it, with focus on speed and a robust collection of functionality.
 
 
 ## Installation
@@ -25,7 +25,7 @@ Or install it yourself as:
 
 ## Usage
 
-Numerix was based strongly off the `System.Numerics` library of Microsoft's .NET Framework, and contains the minimum set of functions and classes that are within it, in addition to many more. 
+Numerix was based strongly off the `System.Numerics` library of Microsoft's .NET Framework (the inspiration behind the name), and contains the minimum set of functions and classes that are within it, in addition to many more. 
 
 The following base classes are implemented completeley, and all work together to form a unified experience.
 
@@ -37,7 +37,7 @@ The following base classes are implemented completeley, and all work together to
 * **Plane** - A structure encapsulating a 3D plane (Vector3 denoting _normal_ and a float for _distance_)
 * **Quaternion** - A structure encapsulating four single precision floating point values (_x, y, z, w_)
 
-For each function (where applicable), there typically a static singleton version of the method, an instance version, and a "impure" variation that alters the object's state. All of the impure methods follow the standard Ruby convention of being suffixed with a `!`.
+For each method (where applicable), there is typically a static singleton, instance, and "impure" instance variation that alters the object's state. All of the impure methods follow the standard Ruby convention of being suffixed with a `!`.
 
 ```ruby
 # Create a vector with 3 elements
