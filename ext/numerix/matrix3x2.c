@@ -14,6 +14,9 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_method(rb_cMatrix3x2, "column", rb_matrix3x2_column, 1);
     rb_define_method(rb_cMatrix3x2, "each_row", rb_matrix3x2_each_row, 0);
     rb_define_method(rb_cMatrix3x2, "each_column", rb_matrix3x2_each_column, 0);
+    rb_define_method(rb_cMatrix3x2, "invert", rb_matrix3x2_invert, 0);
+    rb_define_method(rb_cMatrix3x2, "lerp", rb_matrix3x2_lerp, 2);
+    rb_define_method(rb_cMatrix3x2, "lerp!", rb_matrix3x2_lerp_bang, 2);
     
     // Conversion
     rb_define_method(rb_cMatrix3x2, "to_s", rb_matrix3x2_to_s, 0);
@@ -35,13 +38,7 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix3x2, "create_scale", rb_matrix3x2_create_scale, -1);
     rb_define_singleton_method(rb_cMatrix3x2, "create_skew", rb_matrix3x2_create_skew, -1);
     rb_define_singleton_method(rb_cMatrix3x2, "create_rotation", rb_matrix3x2_create_rotation, -1);
-    rb_define_singleton_method(rb_cMatrix3x2, "invert", rb_matrix3x2_invert_s, 1);
     rb_define_singleton_method(rb_cMatrix3x2, "lerp", rb_matrix3x2_lerp_s, 3);
-
-    rb_define_singleton_method(rb_cMatrix3x2, "negate", rb_matrix3x2_negate_s, 1);
-    rb_define_singleton_method(rb_cMatrix3x2, "add", rb_matrix3x2_add_s, 2);
-    rb_define_singleton_method(rb_cMatrix3x2, "subtract", rb_matrix3x2_subtract_s, 2);
-    rb_define_singleton_method(rb_cMatrix3x2, "multiply", rb_matrix3x2_multiply_s, 2);
 
 }
 
@@ -131,19 +128,85 @@ VALUE rb_matrix3x2_create_translation(int argc, VALUE *argv, VALUE klass) {
 }
 
 VALUE rb_matrix3x2_negate(VALUE self) {
-    return rb_matrix3x2_negate_s(CLASS_OF(self), self);
+    MATRIX4X4();
+    Matrix3x2 *result = ALLOC(Matrix3x2);
+
+    result->m11 = -m->m11;
+    result->m12 = -m->m12;
+    result->m21 = -m->m21;
+    result->m22 = -m->m22;
+    result->m31 = -m->m31;
+    result->m32 = -m->m32;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_matrix3x2_add(VALUE self, VALUE other) {
-    return rb_matrix3x2_add_s(CLASS_OF(self), self, other);
+    Matrix3x2 *m1, *m2, *result;
+    Data_Get_Struct(self, Matrix3x2, m1);
+    Data_Get_Struct(other, Matrix3x2, m2);
+    result = ALLOC(Matrix3x2);
+
+    result->m11 = m1->m11 + m2->m11;
+    result->m12 = m1->m12 + m2->m12;
+    result->m21 = m1->m21 + m2->m21;
+    result->m22 = m1->m22 + m2->m22;
+    result->m31 = m1->m31 + m2->m31;
+    result->m32 = m1->m32 + m2->m32;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_matrix3x2_subtract(VALUE self, VALUE other) {
-    return rb_matrix3x2_subtract_s(CLASS_OF(self), self, other);
+    Matrix3x2 *m1, *m2, *result;
+    Data_Get_Struct(self, Matrix3x2, m1);
+    Data_Get_Struct(other, Matrix3x2, m2);
+    result = ALLOC(Matrix3x2);
+
+    result->m11 = m1->m11 - m2->m11;
+    result->m12 = m1->m12 - m2->m12;
+    result->m21 = m1->m21 - m2->m21;
+    result->m22 = m1->m22 - m2->m22;
+    result->m31 = m1->m31 - m2->m31;
+    result->m32 = m1->m32 - m2->m32;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_matrix3x2_multiply(VALUE self, VALUE other) {
-    return rb_matrix3x2_multiply_s(CLASS_OF(self), self, other);
+    Matrix3x2 *m1, *result;
+    Data_Get_Struct(self, Matrix3x2, m1);
+    result = ALLOC(Matrix3x2);
+    VALUE klass = CLASS_OF(self);
+    if (NUMERIX_TYPE_P(other, klass))
+    {
+        Matrix3x2 *m2, *result;
+        Data_Get_Struct(other, Matrix3x2, m2);
+
+        // First row
+        result->m11 = m1->m11 * m2->m11 + m1->m12 * m2->m21;
+        result->m12 = m1->m11 * m2->m12 + m1->m12 * m2->m22;
+
+        // Second row
+        result->m21 = m1->m21 * m2->m11 + m1->m22 * m2->m21;
+        result->m22 = m1->m21 * m2->m12 + m1->m22 * m2->m22;
+
+        // Third row
+        result->m31 = m1->m31 * m2->m11 + m1->m32 * m2->m21 + m2->m31;
+        result->m32 = m1->m31 * m2->m12 + m1->m32 * m2->m22 + m2->m32;
+    }
+    else
+    {
+        float scalar = NUM2FLT(other);
+        result->m11 = m1->m11 * scalar;
+        result->m12 = m1->m12 * scalar;
+        result->m21 = m1->m21 * scalar;
+        result->m22 = m1->m22 * scalar;
+        result->m31 = m1->m31 * scalar;
+        result->m32 = m1->m32 * scalar;
+    }
+
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix3x2_equal(VALUE self, VALUE other) {
@@ -491,10 +554,9 @@ VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self) {
     return Qnil; 
 }
 
-
-static inline VALUE rb_matrix3x2_invert_s(VALUE klass, VALUE matrix) {
+VALUE rb_matrix3x2_invert(VALUE self) {
     Matrix3x2 *m, *result;
-    Data_Get_Struct(matrix, Matrix3x2, m);
+    Data_Get_Struct(self, Matrix3x2, m);
     result = ALLOC(Matrix3x2);
 
     float det = (m->m11 * m->m22) - (m->m21 * m->m12);
@@ -516,7 +578,50 @@ static inline VALUE rb_matrix3x2_invert_s(VALUE klass, VALUE matrix) {
         result->m32 = (m->m31 * m->m12 - m->m11 * m->m32) * invDet;
     }
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_matrix3x2_lerp(VALUE self, VALUE other, VALUE amount) {
+    Matrix3x2 *m1, *m2, *result;
+    Data_Get_Struct(self, Matrix3x2, m1);
+    Data_Get_Struct(other, Matrix3x2, m2);
+    result = ALLOC(Matrix3x2);
+
+    float weight = NUMERIX_CLAMP(NUM2FLT(amount), 0.0f, 1.0f);
+    // First row
+    result->m11 = m1->m11 + (m2->m11 - m1->m11) * weight;
+    result->m12 = m1->m12 + (m2->m12 - m1->m12) * weight;
+
+    // Second row
+    result->m21 = m1->m21 + (m2->m21 - m1->m21) * weight;
+    result->m22 = m1->m22 + (m2->m22 - m1->m22) * weight;
+
+    // Third row
+    result->m31 = m1->m31 + (m2->m31 - m1->m31) * weight;
+    result->m32 = m1->m32 + (m2->m32 - m1->m32) * weight;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_matrix3x2_lerp_bang(VALUE self, VALUE other, VALUE amount) {
+    Matrix3x2 *m1, *m2;
+    Data_Get_Struct(self, Matrix3x2, m1);
+    Data_Get_Struct(other, Matrix3x2, m2);
+
+    float weight = NUMERIX_CLAMP(NUM2FLT(amount), 0.0f, 1.0f);
+    // First row
+    m1->m11 = m1->m11 + (m2->m11 - m1->m11) * weight;
+    m1->m12 = m1->m12 + (m2->m12 - m1->m12) * weight;
+
+    // Second row
+    m1->m21 = m1->m21 + (m2->m21 - m1->m21) * weight;
+    m1->m22 = m1->m22 + (m2->m22 - m1->m22) * weight;
+
+    // Third row
+    m1->m31 = m1->m31 + (m2->m31 - m1->m31) * weight;
+    m1->m32 = m1->m32 + (m2->m32 - m1->m32) * weight;
+
+    return self;
 }
 
 static inline VALUE rb_matrix3x2_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix2, VALUE amount) {
@@ -537,89 +642,6 @@ static inline VALUE rb_matrix3x2_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix
     // Third row
     result->m31 = m1->m31 + (m2->m31 - m1->m31) * weight;
     result->m32 = m1->m32 + (m2->m32 - m1->m32) * weight;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_matrix3x2_negate_s(VALUE klass, VALUE matrix) {
-    Matrix3x2 *m, *result;
-    Data_Get_Struct(matrix, Matrix3x2, m);
-    result = ALLOC(Matrix3x2);
-
-    result->m11 = -m->m11;
-    result->m12 = -m->m12;
-    result->m21 = -m->m21;
-    result->m22 = -m->m22;
-    result->m31 = -m->m31;
-    result->m32 = -m->m32;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_matrix3x2_add_s(VALUE klass, VALUE matrix1, VALUE matrix2) {
-    Matrix3x2 *m1, *m2, *result;
-    Data_Get_Struct(matrix1, Matrix3x2, m1);
-    Data_Get_Struct(matrix2, Matrix3x2, m2);
-    result = ALLOC(Matrix3x2);
-
-    result->m11 = m1->m11 + m2->m11;
-    result->m12 = m1->m12 + m2->m12;
-    result->m21 = m1->m21 + m2->m21;
-    result->m22 = m1->m22 + m2->m22;
-    result->m31 = m1->m31 + m2->m31;
-    result->m32 = m1->m32 + m2->m32;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_matrix3x2_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2) {
-    Matrix3x2 *m1, *m2, *result;
-    Data_Get_Struct(matrix1, Matrix3x2, m1);
-    Data_Get_Struct(matrix2, Matrix3x2, m2);
-    result = ALLOC(Matrix3x2);
-
-    result->m11 = m1->m11 - m2->m11;
-    result->m12 = m1->m12 - m2->m12;
-    result->m21 = m1->m21 - m2->m21;
-    result->m22 = m1->m22 - m2->m22;
-    result->m31 = m1->m31 - m2->m31;
-    result->m32 = m1->m32 - m2->m32;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_matrix3x2_multiply_s(VALUE klass, VALUE matrix, VALUE other) {
-    Matrix3x2 *m1, *result;
-    Data_Get_Struct(matrix, Matrix3x2, m1);
-    result = ALLOC(Matrix3x2);
-
-    if (NUMERIX_TYPE_P(other, klass))
-    {
-        Matrix3x2 *m2, *result;
-        Data_Get_Struct(other, Matrix3x2, m2);
-
-        // First row
-        result->m11 = m1->m11 * m2->m11 + m1->m12 * m2->m21;
-        result->m12 = m1->m11 * m2->m12 + m1->m12 * m2->m22;
-
-        // Second row
-        result->m21 = m1->m21 * m2->m11 + m1->m22 * m2->m21;
-        result->m22 = m1->m21 * m2->m12 + m1->m22 * m2->m22;
-
-        // Third row
-        result->m31 = m1->m31 * m2->m11 + m1->m32 * m2->m21 + m2->m31;
-        result->m32 = m1->m31 * m2->m12 + m1->m32 * m2->m22 + m2->m32;
-    }
-    else
-    {
-        float scalar = NUM2FLT(other);
-        result->m11 = m1->m11 * scalar;
-        result->m12 = m1->m12 * scalar;
-        result->m21 = m1->m21 * scalar;
-        result->m22 = m1->m22 * scalar;
-        result->m31 = m1->m31 * scalar;
-        result->m32 = m1->m32 * scalar;
-    }
 
     return NUMERIX_WRAP(klass, result);
 }

@@ -9,6 +9,18 @@ void Init_quaternion(VALUE outer) {
     rb_define_method(rb_cQuaternion, "identity?", rb_quaternion_identity_p, 0);
     rb_define_method(rb_cQuaternion, "length", rb_quaternion_length, 0);
     rb_define_method(rb_cQuaternion, "length_squared", rb_quaternion_length_squared, 0);
+    rb_define_method(rb_cQuaternion, "normalize", rb_quaternion_normalize, 0);
+    rb_define_method(rb_cQuaternion, "normalize!", rb_quaternion_normalize_bang, 0);
+    rb_define_method(rb_cQuaternion, "conjugate", rb_quaternion_conjugate, 0);
+    rb_define_method(rb_cQuaternion, "conjugate!", rb_quaternion_conjugate_bang, 0);
+    rb_define_method(rb_cQuaternion, "inverse", rb_quaternion_inverse, 0);
+    rb_define_method(rb_cQuaternion, "dot", rb_quaternion_dot, 1);
+    rb_define_method(rb_cQuaternion, "concatenate", rb_quaternion_concatenate, 1);
+    rb_define_method(rb_cQuaternion, "concatenate!", rb_quaternion_concatenate_bang, 1);
+    rb_define_method(rb_cQuaternion, "lerp", rb_quaternion_lerp, 2);
+    rb_define_method(rb_cQuaternion, "lerp!", rb_quaternion_lerp_bang, 2);
+    rb_define_method(rb_cQuaternion, "slerp", rb_quaternion_slerp, 2);
+    rb_define_method(rb_cQuaternion, "slerp!", rb_quaternion_slerp_bang, 2);
 
     // Conversion
     rb_define_method(rb_cQuaternion, "to_s", rb_quaternion_to_s, 0);
@@ -26,22 +38,11 @@ void Init_quaternion(VALUE outer) {
 
     // Class
     rb_define_singleton_method(rb_cQuaternion, "identity", rb_quaternion_identity, 0);
-    rb_define_singleton_method(rb_cQuaternion, "normalize", rb_quaternion_normalize_s, 1);
-    rb_define_singleton_method(rb_cQuaternion, "conjugate", rb_quaternion_conjugate_s, 1);
-    rb_define_singleton_method(rb_cQuaternion, "inverse", rb_quaternion_inverse_s, 1);
     rb_define_singleton_method(rb_cQuaternion, "from_axis_angle", rb_quaternion_from_axis_angle, 2);
     rb_define_singleton_method(rb_cQuaternion, "from_yaw_pitch_roll", rb_quaternion_from_yaw_pitch_roll, 3);
     rb_define_singleton_method(rb_cQuaternion, "from_rotation_matrix", rb_quaternion_from_rotation_matrix, 1);
-    rb_define_singleton_method(rb_cQuaternion, "dot", rb_quaternion_dot_s, 2);
     rb_define_singleton_method(rb_cQuaternion, "slerp", rb_quaternion_slerp_s, 3);
     rb_define_singleton_method(rb_cQuaternion, "lerp", rb_quaternion_lerp_s, 3);
-    rb_define_singleton_method(rb_cQuaternion, "concatenate", rb_quaternion_concatenate_s, 2);
-    rb_define_singleton_method(rb_cQuaternion, "negate", rb_quaternion_negate_s, 1);
-
-    rb_define_singleton_method(rb_cQuaternion, "add", rb_quaternion_add_s, 2);
-    rb_define_singleton_method(rb_cQuaternion, "subtract", rb_quaternion_subtract_s, 2);
-    rb_define_singleton_method(rb_cQuaternion, "multiply", rb_quaternion_multiply_s, 2);
-    rb_define_singleton_method(rb_cQuaternion, "divide", rb_quaternion_divide_s, 2);
 }
 
 VALUE rb_quaternion_alloc(VALUE klass) {
@@ -97,23 +98,126 @@ VALUE rb_quaternion_length_squared(VALUE self) {
 }
 
 VALUE rb_quaternion_negate(VALUE self) {
-    return rb_quaternion_negate_s(CLASS_OF(self), self);
+    QUATERNION();
+    Quaternion *result = ALLOC(Quaternion);
+
+    result->x = -q->x;
+    result->y = -q->y;
+    result->z = -q->z;
+    result->w = -q->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_add(VALUE self, VALUE other) {
-    return rb_quaternion_add_s(CLASS_OF(self), self, other);
+    Quaternion *q1, *q2, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    result = ALLOC(Quaternion);
+
+    result->x = q1->x + q2->x;
+    result->y = q1->y + q2->y;
+    result->z = q1->z + q2->z;
+    result->w = q1->w + q2->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_subtract(VALUE self, VALUE other) {
-    return rb_quaternion_subtract_s(CLASS_OF(self), self, other);
+    Quaternion *q1, *q2, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    result = ALLOC(Quaternion);
+
+    result->x = q1->x - q2->x;
+    result->y = q1->y - q2->y;
+    result->z = q1->z - q2->z;
+    result->w = q1->w - q2->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_multiply(VALUE self, VALUE other) {
-    return rb_quaternion_multiply_s(CLASS_OF(self), self, other);
+    Quaternion *q1, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    result = ALLOC(Quaternion);
+ 
+    if (NUMERIX_TYPE_P(other, rb_cQuaternion))
+    {
+        Quaternion *q2;
+        Data_Get_Struct(other, Quaternion, q2);
+
+        float q1x = q1->x;
+        float q1y = q1->y;
+        float q1z = q1->z;
+        float q1w = q1->w;
+
+        float q2x = q2->x;
+        float q2y = q2->y;
+        float q2z = q2->z;
+        float q2w = q2->w;
+
+        // cross(av, bv)
+        float cx = q1y * q2z - q1z * q2y;
+        float cy = q1z * q2x - q1x * q2z;
+        float cz = q1x * q2y - q1y * q2x;
+
+        float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+
+        result->x = q1x * q2w + q2x * q1w + cx;
+        result->y = q1y * q2w + q2y * q1w + cy;
+        result->z = q1z * q2w + q2z * q1w + cz;
+        result->w = q1w * q2w - dot;
+    }
+    else
+    {
+        float scalar = NUM2FLT(other);
+        result->x = q1->x * scalar;
+        result->y = q1->y * scalar;
+        result->z = q1->z * scalar;
+        result->w = q1->w * scalar;
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_divide(VALUE self, VALUE other) {
-    return rb_quaternion_divide_s(CLASS_OF(self), self, other);
+    Quaternion *q1, *q2, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    result = ALLOC(Quaternion);
+
+    float q1x = q1->x;
+    float q1y = q1->y;
+    float q1z = q1->z;
+    float q1w = q1->w;
+
+    //-------------------------------------
+    // Inverse part.
+    float ls = q2->x * q2->x + q2->y * q2->y + q2->z * q2->z + q2->w * q2->w;
+    float invNorm = 1.0f / ls;
+
+    float q2x = -q2->x * invNorm;
+    float q2y = -q2->y * invNorm;
+    float q2z = -q2->z * invNorm;
+    float q2w = q2->w * invNorm;
+
+    //-------------------------------------
+    // Multiply part.
+
+    // cross(av, bv)
+    float cx = q1y * q2z - q1z * q2y;
+    float cy = q1z * q2x - q1x * q2z;
+    float cz = q1x * q2y - q1y * q2x;
+
+    float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+
+    result->x = q1x * q2w + q2x * q1w + cx;
+    result->y = q1y * q2w + q2y * q1w + cy;
+    result->z = q1z * q2w + q2z * q1w + cz;
+    result->w = q1w * q2w - dot;
+
+     return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_equal(VALUE self, VALUE other) {
@@ -157,6 +261,62 @@ VALUE rb_quaternion_to_vec4(VALUE self) {
     return NUMERIX_WRAP(rb_cVector4, v);
 }
 
+VALUE rb_quaternion_normalize(VALUE self) {
+    QUATERNION();
+    Quaternion *result = ALLOC(Quaternion);
+
+    float invNorm = 1.0f / sqrtf(q->x * q->x + q->y * q->y + q->z * q->z + q->w * q->w);
+    result->x = q->x * invNorm;
+    result->y = q->y * invNorm;
+    result->z = q->z * invNorm;
+    result->w = q->w * invNorm;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_quaternion_normalize_bang(VALUE self) {
+    QUATERNION();
+
+    float invNorm = 1.0f / sqrtf(q->x * q->x + q->y * q->y + q->z * q->z + q->w * q->w);
+    q->x = q->x * invNorm;
+    q->y = q->y * invNorm;
+    q->z = q->z * invNorm;
+    q->w = q->w * invNorm;
+
+    return self;
+}
+
+VALUE rb_quaternion_conjugate(VALUE self) {
+    QUATERNION();
+    Quaternion *result = ALLOC(Quaternion);
+
+    result->x = -q->x;
+    result->y = -q->y;
+    result->z = -q->z;
+    result->w = q->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_quaternion_conjugate_bang(VALUE self) {
+    QUATERNION();
+
+    q->x = -q->x;
+    q->y = -q->y;
+    q->z = -q->z;
+    q->w = q->w;
+
+    return self;
+}
+
+VALUE rb_quaternion_dot(VALUE self, VALUE other) {
+    Quaternion *q1, *q2;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+
+    return DBL2NUM(q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w);
+}
+
 VALUE rb_quaternion_identity(VALUE klass) {
     Quaternion *q = ALLOC(Quaternion);
     q->x = 0.0f;
@@ -166,37 +326,9 @@ VALUE rb_quaternion_identity(VALUE klass) {
     return NUMERIX_WRAP(klass, q);
 }
 
-static inline VALUE rb_quaternion_normalize_s(VALUE klass, VALUE quaternion) {
-    Quaternion *q, *result;
-    Data_Get_Struct(quaternion, Quaternion, q);
-    result = ALLOC(Quaternion);
-
-    float invNorm = 1.0f / sqrtf(q->x * q->x + q->y * q->y + q->z * q->z + q->w * q->w);
-    result->x = q->x * invNorm;
-    result->y = q->y * invNorm;
-    result->z = q->z * invNorm;
-    result->w = q->w * invNorm;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_conjugate_s(VALUE klass, VALUE quaternion) {
-    Quaternion *q, *result;
-    Data_Get_Struct(quaternion, Quaternion, q);
-    result = ALLOC(Quaternion);
-
-    result->x = -q->x;
-    result->y = -q->y;
-    result->z = -q->z;
-    result->w = q->w;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_inverse_s(VALUE klass, VALUE quaternion) {
-    Quaternion *q, *result;
-    Data_Get_Struct(quaternion, Quaternion, q);
-    result = ALLOC(Quaternion);
+VALUE rb_quaternion_inverse(VALUE self) {
+    QUATERNION();
+    Quaternion *result = ALLOC(Quaternion);
 
     //  -1   (       a              -v       )
     // q   = ( -------------   ------------- )
@@ -210,7 +342,232 @@ static inline VALUE rb_quaternion_inverse_s(VALUE klass, VALUE quaternion) {
     result->z = -q->z * invNorm;
     result->w = q->w * invNorm;
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_quaternion_concatenate(VALUE self, VALUE other) {
+    Quaternion *q1, *q2, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    result = ALLOC(Quaternion);
+
+    // Concatenate rotation is actually q2 * q1 instead of q1 * q2.
+    // So that's why q2 goes q1 and q1 goes q2.
+    float q1x = q2->x;
+    float q1y = q2->y;
+    float q1z = q2->z;
+    float q1w = q2->w;
+
+    float q2x = q1->x;
+    float q2y = q1->y;
+    float q2z = q1->z;
+    float q2w = q1->w;
+
+    // cross(av, bv)
+    float cx = q1y * q2z - q1z * q2y;
+    float cy = q1z * q2x - q1x * q2z;
+    float cz = q1x * q2y - q1y * q2x;
+
+    float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+
+    result->x = q1x * q2w + q2x * q1w + cx;
+    result->y = q1y * q2w + q2y * q1w + cy;
+    result->z = q1z * q2w + q2z * q1w + cz;
+    result->w = q1w * q2w - dot;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_quaternion_concatenate_bang(VALUE self, VALUE other) {
+    Quaternion *q1, *q2;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+
+    // Concatenate rotation is actually q2 * q1 instead of q1 * q2.
+    // So that's why q2 goes q1 and q1 goes q2.
+    float q1x = q2->x;
+    float q1y = q2->y;
+    float q1z = q2->z;
+    float q1w = q2->w;
+
+    float q2x = q1->x;
+    float q2y = q1->y;
+    float q2z = q1->z;
+    float q2w = q1->w;
+
+    // cross(av, bv)
+    float cx = q1y * q2z - q1z * q2y;
+    float cy = q1z * q2x - q1x * q2z;
+    float cz = q1x * q2y - q1y * q2x;
+
+    float dot = q1x * q2x + q1y * q2y + q1z * q2z;
+
+    q1->x = q1x * q2w + q2x * q1w + cx;
+    q1->y = q1y * q2w + q2y * q1w + cy;
+    q1->z = q1z * q2w + q2z * q1w + cz;
+    q1->w = q1w * q2w - dot;
+
+    return self;
+}
+
+VALUE rb_quaternion_lerp(VALUE self, VALUE other, VALUE amount) {
+    Quaternion *q1, *q2, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    result = ALLOC(Quaternion);
+
+    float t = amount;
+    float t1 = 1.0f - t;
+    float dot = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
+
+    if (dot >= 0.0f)
+    {
+        result->x = t1 * q1->x + t * q2->x;
+        result->y = t1 * q1->y + t * q2->y;
+        result->z = t1 * q1->z + t * q2->z;
+        result->w = t1 * q1->w + t * q2->w;
+    }
+    else
+    {
+        result->x = t1 * q1->x - t * q2->x;
+        result->y = t1 * q1->y - t * q2->y;
+        result->z = t1 * q1->z - t * q2->z;
+        result->w = t1 * q1->w - t * q2->w;
+    }
+
+    // Normalize it.
+    float ls = result->x * result->x + result->y * result->y + result->z * result->z + result->w * result->w;
+    float invNorm = 1.0f / sqrtf(ls);
+
+    result->x *= invNorm;
+    result->y *= invNorm;
+    result->z *= invNorm;
+    result->w *= invNorm;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_quaternion_lerp_bang(VALUE self, VALUE other, VALUE amount) {
+    Quaternion *q1, *q2;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+
+    float t = amount;
+    float t1 = 1.0f - t;
+    float dot = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
+
+    if (dot >= 0.0f)
+    {
+        q1->x = t1 * q1->x + t * q2->x;
+        q1->y = t1 * q1->y + t * q2->y;
+        q1->z = t1 * q1->z + t * q2->z;
+        q1->w = t1 * q1->w + t * q2->w;
+    }
+    else
+    {
+        q1->x = t1 * q1->x - t * q2->x;
+        q1->y = t1 * q1->y - t * q2->y;
+        q1->z = t1 * q1->z - t * q2->z;
+        q1->w = t1 * q1->w - t * q2->w;
+    }
+
+    // Normalize it.
+    float ls = q1->x * q1->x + q1->y * q1->y + q1->z * q1->z + q1->w * q1->w;
+    float invNorm = 1.0f / sqrtf(ls);
+
+    q1->x *= invNorm;
+    q1->y *= invNorm;
+    q1->z *= invNorm;
+    q1->w *= invNorm;
+
+    return self;
+}
+
+VALUE rb_quaternion_slerp(VALUE self, VALUE other, VALUE amount) {
+    Quaternion *q1, *q2, *result;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    
+    const float epsilon = 1e-6f;
+
+    float t = amount;
+    float cosOmega = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
+    int flip = 0;
+    float s1, s2;
+
+    if (cosOmega < 0.0f)
+    {
+        flip = 1;
+        cosOmega = -cosOmega;
+    }
+
+    if (cosOmega > (1.0f - epsilon))
+    {
+        // Too close, do straight linear interpolation.
+        s1 = 1.0f - t;
+        s2 = (flip) ? -t : t;
+    }
+    else
+    {
+        float omega = acosf(cosOmega);
+        float invSinOmega = 1.0f / sinf(omega);
+
+        s1 = sinf((1.0f - t) * omega) * invSinOmega;
+        s2 = (flip)
+            ? -sinf(t * omega) * invSinOmega
+            : sinf(t * omega) * invSinOmega;
+    }
+
+    result = ALLOC(Quaternion);
+    result->x = s1 * q1->x + s2 * q2->x;
+    result->y = s1 * q1->y + s2 * q2->y;
+    result->z = s1 * q1->z + s2 * q2->z;
+    result->w = s1 * q1->w + s2 * q2->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);   
+}
+
+VALUE rb_quaternion_slerp_bang(VALUE self, VALUE other, VALUE amount) {
+    Quaternion *q1, *q2;
+    Data_Get_Struct(self, Quaternion, q1);
+    Data_Get_Struct(other, Quaternion, q2);
+    
+    const float epsilon = 1e-6f;
+
+    float t = amount;
+    float cosOmega = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
+    int flip = 0;
+    float s1, s2;
+
+    if (cosOmega < 0.0f)
+    {
+        flip = 1;
+        cosOmega = -cosOmega;
+    }
+
+    if (cosOmega > (1.0f - epsilon))
+    {
+        // Too close, do straight linear interpolation.
+        s1 = 1.0f - t;
+        s2 = (flip) ? -t : t;
+    }
+    else
+    {
+        float omega = acosf(cosOmega);
+        float invSinOmega = 1.0f / sinf(omega);
+
+        s1 = sinf((1.0f - t) * omega) * invSinOmega;
+        s2 = (flip)
+            ? -sinf(t * omega) * invSinOmega
+            : sinf(t * omega) * invSinOmega;
+    }
+
+    q1->x = s1 * q1->x + s2 * q2->x;
+    q1->y = s1 * q1->y + s2 * q2->y;
+    q1->z = s1 * q1->z + s2 * q2->z;
+    q1->w = s1 * q1->w + s2 * q2->w;
+
+    return self;
 }
 
 VALUE rb_quaternion_from_axis_angle(VALUE klass, VALUE vec3, VALUE angle) {
@@ -308,14 +665,6 @@ VALUE rb_quaternion_from_rotation_matrix(VALUE klass, VALUE matrix) {
     return NUMERIX_WRAP(klass, q);
 }
 
-static inline VALUE rb_quaternion_dot_s(VALUE klass, VALUE quaternion1, VALUE quaternion2) {
-    Quaternion *q1, *q2, *result;
-    Data_Get_Struct(quaternion1, Quaternion, q1);
-    Data_Get_Struct(quaternion2, Quaternion, q2);
-
-    return DBL2NUM(q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w);
-}
-
 static inline VALUE rb_quaternion_slerp_s(VALUE klass, VALUE quaternion1, VALUE quaternion2, VALUE amount) {
     Quaternion *q1, *q2, *result;
     Data_Get_Struct(quaternion1, Quaternion, q1);
@@ -395,162 +744,4 @@ static inline VALUE rb_quaternion_lerp_s(VALUE klass, VALUE quaternion1, VALUE q
     result->w *= invNorm;
 
     return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_concatenate_s(VALUE klass, VALUE quaternion1, VALUE quaternion2) {
-    Quaternion *q1, *q2, *result;
-    Data_Get_Struct(quaternion1, Quaternion, q1);
-    Data_Get_Struct(quaternion2, Quaternion, q2);
-    result = ALLOC(Quaternion);
-
-    // Concatenate rotation is actually q2 * q1 instead of q1 * q2.
-    // So that's why q2 goes q1 and q1 goes q2.
-    float q1x = q2->x;
-    float q1y = q2->y;
-    float q1z = q2->z;
-    float q1w = q2->w;
-
-    float q2x = q1->x;
-    float q2y = q1->y;
-    float q2z = q1->z;
-    float q2w = q1->w;
-
-    // cross(av, bv)
-    float cx = q1y * q2z - q1z * q2y;
-    float cy = q1z * q2x - q1x * q2z;
-    float cz = q1x * q2y - q1y * q2x;
-
-    float dot = q1x * q2x + q1y * q2y + q1z * q2z;
-
-    result->x = q1x * q2w + q2x * q1w + cx;
-    result->y = q1y * q2w + q2y * q1w + cy;
-    result->z = q1z * q2w + q2z * q1w + cz;
-    result->w = q1w * q2w - dot;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_negate_s(VALUE klass, VALUE quaternion) {
-    Quaternion *q, *result;
-    Data_Get_Struct(quaternion, Quaternion, q);
-    result = ALLOC(Quaternion);
-
-    result->x = -q->x;
-    result->y = -q->y;
-    result->z = -q->z;
-    result->w = -q->w;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_add_s(VALUE klass, VALUE quaternion1, VALUE quaternion2) {
-    Quaternion *q1, *q2, *result;
-    Data_Get_Struct(quaternion1, Quaternion, q1);
-    Data_Get_Struct(quaternion2, Quaternion, q2);
-    result = ALLOC(Quaternion);
-
-    result->x = q1->x + q2->x;
-    result->y = q1->y + q2->y;
-    result->z = q1->z + q2->z;
-    result->w = q1->w + q2->w;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_subtract_s(VALUE klass, VALUE quaternion1, VALUE quaternion2) {
-    Quaternion *q1, *q2, *result;
-    Data_Get_Struct(quaternion1, Quaternion, q1);
-    Data_Get_Struct(quaternion2, Quaternion, q2);
-    result = ALLOC(Quaternion);
-
-    result->x = q1->x - q2->x;
-    result->y = q1->y - q2->y;
-    result->z = q1->z - q2->z;
-    result->w = q1->w - q2->w;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_quaternion_multiply_s(VALUE klass, VALUE quaternion, VALUE other) {
-    Quaternion *q1, *result;
-    Data_Get_Struct(quaternion, Quaternion, q1);
-    result = ALLOC(Quaternion);
- 
-    if (NUMERIX_TYPE_P(other, rb_cQuaternion))
-    {
-        Quaternion *q2;
-        Data_Get_Struct(other, Quaternion, q2);
-
-        float q1x = q1->x;
-        float q1y = q1->y;
-        float q1z = q1->z;
-        float q1w = q1->w;
-
-        float q2x = q2->x;
-        float q2y = q2->y;
-        float q2z = q2->z;
-        float q2w = q2->w;
-
-        // cross(av, bv)
-        float cx = q1y * q2z - q1z * q2y;
-        float cy = q1z * q2x - q1x * q2z;
-        float cz = q1x * q2y - q1y * q2x;
-
-        float dot = q1x * q2x + q1y * q2y + q1z * q2z;
-
-        result->x = q1x * q2w + q2x * q1w + cx;
-        result->y = q1y * q2w + q2y * q1w + cy;
-        result->z = q1z * q2w + q2z * q1w + cz;
-        result->w = q1w * q2w - dot;
-    }
-    else
-    {
-        float scalar = NUM2FLT(other);
-        result->x = q1->x * scalar;
-        result->y = q1->y * scalar;
-        result->z = q1->z * scalar;
-        result->w = q1->w * scalar;
-    }
-
-    return NUMERIX_WRAP(klass, result);
-
-}
-
-static inline VALUE rb_quaternion_divide_s(VALUE klass, VALUE quaternion1, VALUE quaternion2) {
-    Quaternion *q1, *q2, *result;
-    Data_Get_Struct(quaternion1, Quaternion, q1);
-    Data_Get_Struct(quaternion2, Quaternion, q2);
-    result = ALLOC(Quaternion);
-
-    float q1x = q1->x;
-    float q1y = q1->y;
-    float q1z = q1->z;
-    float q1w = q1->w;
-
-    //-------------------------------------
-    // Inverse part.
-    float ls = q2->x * q2->x + q2->y * q2->y + q2->z * q2->z + q2->w * q2->w;
-    float invNorm = 1.0f / ls;
-
-    float q2x = -q2->x * invNorm;
-    float q2y = -q2->y * invNorm;
-    float q2z = -q2->z * invNorm;
-    float q2w = q2->w * invNorm;
-
-    //-------------------------------------
-    // Multiply part.
-
-    // cross(av, bv)
-    float cx = q1y * q2z - q1z * q2y;
-    float cy = q1z * q2x - q1x * q2z;
-    float cz = q1x * q2y - q1y * q2x;
-
-    float dot = q1x * q2x + q1y * q2y + q1z * q2z;
-
-    result->x = q1x * q2w + q2x * q1w + cx;
-    result->y = q1y * q2w + q2y * q1w + cy;
-    result->z = q1z * q2w + q2z * q1w + cz;
-    result->w = q1w * q2w - dot;
-
-     return NUMERIX_WRAP(klass, result);
 }

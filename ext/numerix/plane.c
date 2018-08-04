@@ -14,17 +14,19 @@ void Init_plane(VALUE outer) {
     rb_define_method(rb_cPlane, "normal=", rb_plane_normal_set, 1);
     rb_define_method(rb_cPlane, "distance=", rb_plane_distance_set, 1);
     rb_define_method(rb_cPlane, "==", rb_plane_equal, 1);
+    rb_define_method(rb_cPlane, "transform", rb_plane_transform, 1);
+    rb_define_method(rb_cPlane, "transform!", rb_plane_transform_bang, 1);
+    rb_define_method(rb_cPlane, "dot", rb_plane_dot, 1);
+    rb_define_method(rb_cPlane, "dot_coord", rb_plane_dot_coord, 1);
+    rb_define_method(rb_cPlane, "dot_normal", rb_plane_dot_normal, 1);
+    rb_define_method(rb_cPlane, "normalize", rb_plane_normalize, 0);
+    rb_define_method(rb_cPlane, "normalize!", rb_plane_normalize_bang, 0);
 
     // Conversion
     rb_define_method(rb_cPlane, "to_s", rb_plane_to_s, 0);
 
     // Class
     rb_define_singleton_method(rb_cPlane, "from_vertices", rb_plane_from_vertices_s, 3);
-    rb_define_singleton_method(rb_cPlane, "normalize", rb_plane_normalize_s, 1);
-    rb_define_singleton_method(rb_cPlane, "transfrom", rb_plane_transform_s, 2);
-    rb_define_singleton_method(rb_cPlane, "dot", rb_plane_dot_s, 2);
-    rb_define_singleton_method(rb_cPlane, "dot_coord", rb_plane_dot_coord_s, 2);
-    rb_define_singleton_method(rb_cPlane, "dot_normal", rb_plane_dot_normal_s, 2);
   
 }
 
@@ -110,66 +112,9 @@ VALUE rb_plane_to_s(VALUE self) {
     return rb_sprintf("{<%f, %f, %f>, %f}", p->normal.x, p->normal.y, p->normal.z, p->distance);
 }
 
-
-VALUE rb_plane_from_vertices_s(VALUE klass, VALUE vert1, VALUE vert2, VALUE vert3) {
-    Vector3 *v1, *v2, *v3;
-    Data_Get_Struct(vert1, Vector3, v1);
-    Data_Get_Struct(vert2, Vector3, v2);
-    Data_Get_Struct(vert3, Vector3, v3);
-
-    float ax = v2->x - v1->x;
-    float ay = v2->y - v1->y;
-    float az = v2->z - v1->z;
-
-    float bx = v3->x - v1->x;
-    float by = v3->y - v1->y;
-    float bz = v3->z - v1->z;
-
-    // N=Cross(a,b)
-    float nx = ay * bz - az * by;
-    float ny = az * bx - ax * bz;
-    float nz = ax * by - ay * bx;
-
-    // Normalize(N)
-    float invNorm = 1.0f / sqrtf(nx * nx + ny * ny + nz * nz);
-
-    Plane *p = ALLOC(Plane);
-    p->normal.x = nx * invNorm;
-    p->normal.y = ny * invNorm;
-    p->normal.z = nz * invNorm;
-    p->distance = -(p->normal.x * v1->x + p->normal.y * v1->y + p->normal.z * v1->z);
-    
-    return NUMERIX_WRAP(klass, p);
-}
-
-VALUE rb_plane_normalize_s(VALUE klass, VALUE plane) {
-    Plane *p, *result;
-    Data_Get_Struct(plane, Plane, p);
-    result = ALLOC(Plane);
-
-    float f = p->normal.x * p->normal.x + p->normal.y * p->normal.y + p->normal.z * p->normal.z;
-
-    if (fabsf(f - 1.0f) < FLT_EPSILON)
-    {
-        // It already normalized, so we don't need to further process.
-        memcpy(result, p, sizeof(Plane)); 
-    }
-    else
-    {
-        float fInv = 1.0f / sqrtf(f);
-        result->normal.x = p->normal.x * fInv;
-        result->normal.y = p->normal.y * fInv;
-        result->normal.z = p->normal.z * fInv;
-        result->distance = p->distance * fInv;
-    }
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_plane_transform_s(VALUE klass, VALUE plane, VALUE matrix) {
-    Plane *p, *result;
-    Data_Get_Struct(plane, Plane, p);
-    result = ALLOC(Plane);
+VALUE rb_plane_transform(VALUE self, VALUE matrix) {
+    PLANE();
+    Plane *result = ALLOC(Plane);
 
     if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
     {
@@ -224,32 +169,158 @@ static inline VALUE rb_plane_transform_s(VALUE klass, VALUE plane, VALUE matrix)
         result->distance = p->distance;
     }
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
-static inline VALUE rb_plane_dot_s(VALUE klass, VALUE plane, VALUE vec4) {
-    Plane *p;
+VALUE rb_plane_transform_bang(VALUE self, VALUE matrix) {
+    PLANE();
+
+    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
+    {
+        VALUE inverted = rb_matrix4x4_invert(matrix);
+        Matrix4x4 *m;
+        Data_Get_Struct(inverted, Matrix4x4, m);
+
+        float x = p->normal.x, y = p->normal.y, z = p->normal.z, w = p->distance;
+
+        p->normal.x = x * m->m11 + y * m->m12 + z * m->m13 + w * m->m14;
+        p->normal.y = x * m->m21 + y * m->m22 + z * m->m23 + w * m->m24;
+        p->normal.z = x * m->m31 + y * m->m32 + z * m->m33 + w * m->m34;
+        p->distance = x * m->m41 + y * m->m42 + z * m->m43 + w * m->m44;
+    }
+    else 
+    {
+        Quaternion *q;
+        Data_Get_Struct(matrix, Quaternion, q);
+
+        // Compute rotation matrix.
+        float x2 = q->x + q->x;
+        float y2 = q->y + q->y;
+        float z2 = q->z + q->z;
+
+        float wx2 = q->w * x2;
+        float wy2 = q->w * y2;
+        float wz2 = q->w * z2;
+        float xx2 = q->x * x2;
+        float xy2 = q->x * y2;
+        float xz2 = q->x * z2;
+        float yy2 = q->y * y2;
+        float yz2 = q->y * z2;
+        float zz2 = q->z * z2;
+
+        float m11 = 1.0f - yy2 - zz2;
+        float m21 = xy2 - wz2;
+        float m31 = xz2 + wy2;
+
+        float m12 = xy2 + wz2;
+        float m22 = 1.0f - xx2 - zz2;
+        float m32 = yz2 - wx2;
+
+        float m13 = xz2 - wy2;
+        float m23 = yz2 + wx2;
+        float m33 = 1.0f - xx2 - yy2;
+
+        float x = p->normal.x, y = p->normal.y, z = p->normal.z;
+
+        p->normal.x = x * m11 + y * m21 + z * m31;
+        p->normal.y = x * m12 + y * m22 + z * m32;
+        p->normal.y = x * m13 + y * m23 + z * m33;
+        p->distance = p->distance;
+    }
+
+    return self;
+}
+
+VALUE rb_plane_dot(VALUE self, VALUE vec4) {
+    PLANE();
     Vector4 *v;
-    Data_Get_Struct(plane, Plane, p);
     Data_Get_Struct(vec4, Vector4, v);
 
     return DBL2NUM(p->normal.x * v->x + p->normal.y * v->y + p->normal.z * v->z + p->distance * v->w);
 }
 
-static inline VALUE rb_plane_dot_coord_s(VALUE klass, VALUE plane, VALUE vec3) {
-    Plane *p;
+VALUE rb_plane_dot_coord(VALUE self, VALUE vec3) {
+    PLANE();
     Vector3 *v;
-    Data_Get_Struct(plane, Plane, p);
     Data_Get_Struct(vec3, Vector3, v);
     return DBL2NUM(p->normal.x * v->x + p->normal.y * v->y + p->normal.z * v->z + p->distance);
 
 }
 
-static inline VALUE rb_plane_dot_normal_s(VALUE klass, VALUE plane, VALUE vec3) {
-    Plane *p;
+VALUE rb_plane_dot_normal(VALUE self, VALUE vec3) {
+    PLANE();
     Vector3 *v;
-    Data_Get_Struct(plane, Plane, p);
     Data_Get_Struct(vec3, Vector3, v);
 
     return DBL2NUM(p->normal.x * v->x + p->normal.y * v->y + p->normal.z * v->z);
+}
+
+VALUE rb_plane_normalize(VALUE self) {
+    PLANE();
+    Plane *result = ALLOC(Plane);
+
+    float f = p->normal.x * p->normal.x + p->normal.y * p->normal.y + p->normal.z * p->normal.z;
+
+    if (fabsf(f - 1.0f) < FLT_EPSILON)
+    {
+        // It already normalized, so we don't need to further process.
+        memcpy(result, p, sizeof(Plane)); 
+    }
+    else
+    {
+        float fInv = 1.0f / sqrtf(f);
+        result->normal.x = p->normal.x * fInv;
+        result->normal.y = p->normal.y * fInv;
+        result->normal.z = p->normal.z * fInv;
+        result->distance = p->distance * fInv;
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_plane_normalize_bang(VALUE self) {
+    PLANE();
+    float f = p->normal.x * p->normal.x + p->normal.y * p->normal.y + p->normal.z * p->normal.z;
+
+    if (fabsf(f - 1.0f) >= FLT_EPSILON)
+    {
+        float fInv = 1.0f / sqrtf(f);
+        p->normal.x = p->normal.x * fInv;
+        p->normal.y = p->normal.y * fInv;
+        p->normal.z = p->normal.z * fInv;
+        p->distance = p->distance * fInv;
+    }
+
+    return self;
+}
+
+VALUE rb_plane_from_vertices_s(VALUE klass, VALUE vert1, VALUE vert2, VALUE vert3) {
+    Vector3 *v1, *v2, *v3;
+    Data_Get_Struct(vert1, Vector3, v1);
+    Data_Get_Struct(vert2, Vector3, v2);
+    Data_Get_Struct(vert3, Vector3, v3);
+
+    float ax = v2->x - v1->x;
+    float ay = v2->y - v1->y;
+    float az = v2->z - v1->z;
+
+    float bx = v3->x - v1->x;
+    float by = v3->y - v1->y;
+    float bz = v3->z - v1->z;
+
+    // N=Cross(a,b)
+    float nx = ay * bz - az * by;
+    float ny = az * bx - ax * bz;
+    float nz = ax * by - ay * bx;
+
+    // Normalize(N)
+    float invNorm = 1.0f / sqrtf(nx * nx + ny * ny + nz * nz);
+
+    Plane *p = ALLOC(Plane);
+    p->normal.x = nx * invNorm;
+    p->normal.y = ny * invNorm;
+    p->normal.z = nz * invNorm;
+    p->distance = -(p->normal.x * v1->x + p->normal.y * v1->y + p->normal.z * v1->z);
+    
+    return NUMERIX_WRAP(klass, p);
 }

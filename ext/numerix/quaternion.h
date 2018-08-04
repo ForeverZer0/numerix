@@ -22,6 +22,20 @@ VALUE rb_quaternion_subtract(VALUE self, VALUE other);
 VALUE rb_quaternion_multiply(VALUE self, VALUE other);
 VALUE rb_quaternion_divide(VALUE self, VALUE other);
 VALUE rb_quaternion_equal(VALUE self, VALUE other);
+VALUE rb_quaternion_normalize(VALUE self);
+VALUE rb_quaternion_normalize_bang(VALUE self);
+VALUE rb_quaternion_conjugate(VALUE self);
+VALUE rb_quaternion_conjugate_bang(VALUE self);
+VALUE rb_quaternion_inverse(VALUE self);
+VALUE rb_quaternion_dot(VALUE self, VALUE other);
+VALUE rb_quaternion_concatenate(VALUE self, VALUE other);
+VALUE rb_quaternion_concatenate_bang(VALUE self, VALUE other);
+VALUE rb_quaternion_lerp(VALUE self, VALUE other, VALUE amount);
+VALUE rb_quaternion_lerp_bang(VALUE self, VALUE other, VALUE amount);
+VALUE rb_quaternion_slerp(VALUE self, VALUE other, VALUE amount);
+VALUE rb_quaternion_slerp_bang(VALUE self, VALUE other, VALUE amount);
+
+// Conversion
 VALUE rb_quaternion_to_s(VALUE self);
 VALUE rb_quaternion_to_a(VALUE self);
 VALUE rb_quaternion_to_h(VALUE self);
@@ -29,20 +43,12 @@ VALUE rb_quaternion_to_vec4(VALUE self);
 
 // Class
 VALUE rb_quaternion_identity(VALUE klass);
-static inline VALUE rb_quaternion_normalize_s(VALUE klass, VALUE quaternion);
-static inline VALUE rb_quaternion_conjugate_s(VALUE klass, VALUE quaternion);
-static inline VALUE rb_quaternion_inverse_s(VALUE klass, VALUE quaternion);
 VALUE rb_quaternion_from_axis_angle(VALUE klass, VALUE vec3, VALUE angle);
 VALUE rb_quaternion_from_yaw_pitch_roll(VALUE klass, VALUE yaw, VALUE pitch, VALUE roll);
 VALUE rb_quaternion_from_rotation_matrix(VALUE klass, VALUE matrix);
-static inline VALUE rb_quaternion_dot_s(VALUE klass, VALUE quaternion1, VALUE quaternion2);
+
 static inline VALUE rb_quaternion_slerp_s(VALUE klass, VALUE quaternion1, VALUE quaternion2, VALUE amount);
 static inline VALUE rb_quaternion_lerp_s(VALUE klass, VALUE quaternion1, VALUE quaternion2, VALUE amount);
-static inline VALUE rb_quaternion_concatenate_s(VALUE klass, VALUE quaternion1, VALUE quaternion2);
-static inline VALUE rb_quaternion_negate_s(VALUE klass, VALUE quaternion);
-static inline VALUE rb_quaternion_add_s(VALUE klass, VALUE quaternion1, VALUE quaternion2);
-static inline VALUE rb_quaternion_subtract_s(VALUE klass, VALUE quaternion1, VALUE quaternion2);
-static inline VALUE rb_quaternion_multiply_s(VALUE klass, VALUE quaternion, VALUE other);
-static inline VALUE rb_quaternion_divide_s(VALUE klass, VALUE quaternion, VALUE other);
+
 
 #endif /* NUMERIX_QUATERNION_H */

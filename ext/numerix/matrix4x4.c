@@ -59,9 +59,7 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix4x4, "from_yaw_pitch_roll", rb_matrix4x4_from_yaw_pitch_roll, 3);
     rb_define_singleton_method(rb_cMatrix4x4, "create_shadow", rb_matrix4x4_create_shadow, 2);
     rb_define_singleton_method(rb_cMatrix4x4, "create_reflection", rb_matrix4x4_create_reflection, 1);
-
     rb_define_singleton_method(rb_cMatrix4x4, "lerp", rb_matrix4x4_lerp_s, 3);
-
 }
 
 static inline void numerix_cross_norm(Vector3 *v1, Vector3 *v2, Vector3 *result) {
@@ -1276,7 +1274,7 @@ VALUE rb_matrix4x4_create_shadow(VALUE klass, VALUE lightDir, VALUE plane) {
     Vector3 *light;
     Data_Get_Struct(lightDir, Vector3, light);
 
-    VALUE normPlane = rb_plane_normalize_s(rb_cPlane, plane);
+    VALUE normPlane = rb_plane_normalize(plane);
     Plane *p;
     Data_Get_Struct(normPlane, Plane, p);
     
@@ -1312,7 +1310,7 @@ VALUE rb_matrix4x4_create_shadow(VALUE klass, VALUE lightDir, VALUE plane) {
 }
 
 VALUE rb_matrix4x4_create_reflection(VALUE klass, VALUE plane) {
-    VALUE normPlane = rb_plane_normalize_s(rb_cPlane, plane);
+    VALUE normPlane = rb_plane_normalize(plane);
     Plane *p;
     Data_Get_Struct(normPlane, Plane, p);
 

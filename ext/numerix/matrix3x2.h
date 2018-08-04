@@ -28,6 +28,9 @@ VALUE rb_matrix3x2_each_row(VALUE self);
 VALUE rb_matrix3x2_each_column(VALUE self);
 VALUE rb_matrix3x2_aref(int argc, VALUE *argv, VALUE self);
 VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self);
+VALUE rb_matrix3x2_invert(VALUE self);
+VALUE rb_matrix3x2_lerp(VALUE self, VALUE other, VALUE amount);
+VALUE rb_matrix3x2_lerp_bang(VALUE self, VALUE other, VALUE amount);
 
 // Conversion
 VALUE rb_matrix3x2_to_s(VALUE self);
@@ -40,11 +43,7 @@ VALUE rb_matrix3x2_create_translation(int argc, VALUE *argv, VALUE klass);
 VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass);
 VALUE rb_matrix3x2_create_skew(int argc, VALUE *argv, VALUE klass);
 VALUE rb_matrix3x2_create_rotation(int argc, VALUE *argv, VALUE klass);
-static inline VALUE rb_matrix3x2_invert_s(VALUE klass, VALUE matrix);
+
 static inline VALUE rb_matrix3x2_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix2, VALUE amount);
-static inline VALUE rb_matrix3x2_negate_s(VALUE klass, VALUE matrix);
-static inline VALUE rb_matrix3x2_add_s(VALUE klass, VALUE matrix1, VALUE matrix2);
-static inline VALUE rb_matrix3x2_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2);
-static inline VALUE rb_matrix3x2_multiply_s(VALUE klass, VALUE matrix, VALUE other);
 
 #endif /* NUMERIX_MATRIX3X2_H */
