@@ -1,2 +1,4 @@
-class Vector2
+module Numerix
+  class Vector2 < VectorBase
+  end
 end

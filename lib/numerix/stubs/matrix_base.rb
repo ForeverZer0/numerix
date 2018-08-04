@@ -1,2 +1,4 @@
-class MatrixBase
+module Numerix
+  class MatrixBase < Structure
+  end
 end
