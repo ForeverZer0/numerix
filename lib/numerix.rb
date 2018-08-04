@@ -3,6 +3,7 @@ require_relative 'numerix/numerix'
 
 module Numerix
 
+  v = Vector4.zero
 
 
 end

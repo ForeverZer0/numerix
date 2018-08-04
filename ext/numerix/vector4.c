@@ -57,22 +57,22 @@ void Init_vector4(VALUE outer) {
     rb_define_singleton_method(rb_cVector4, "unit_z", rb_vector4_unit_z, 0);
     rb_define_singleton_method(rb_cVector4, "unit_w", rb_vector4_unit_w, 0);
     rb_define_singleton_method(rb_cVector4, "create_norm", rb_vector4_create_norm, 4);
-    rb_define_singleton_method(rb_cVector4, "distance", rb_vector4_distance_s, 2);
-    rb_define_singleton_method(rb_cVector4, "distance_squared", rb_vector4_distance_squared_s, 2);
-    rb_define_singleton_method(rb_cVector4, "normalize", rb_vector4_normalize_s, 1);
+    // rb_define_singleton_method(rb_cVector4, "distance", rb_vector4_distance_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "distance_squared", rb_vector4_distance_squared_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "normalize", rb_vector4_normalize_s, 1);
     rb_define_singleton_method(rb_cVector4, "clamp", rb_vector4_clamp_s, 3);
     rb_define_singleton_method(rb_cVector4, "lerp", rb_vector4_lerp_s, 3);
     rb_define_singleton_method(rb_cVector4, "transform", rb_vector4_transform_s, 2);
     rb_define_singleton_method(rb_cVector4, "min", rb_vector4_min_s, 2);
     rb_define_singleton_method(rb_cVector4, "max", rb_vector4_max_s, 2);
-    rb_define_singleton_method(rb_cVector4, "abs", rb_vector4_abs_s, 1);
-    rb_define_singleton_method(rb_cVector4, "sqrt", rb_vector4_sqrt_s, 1);
-    rb_define_singleton_method(rb_cVector4, "dot", rb_vector4_dot_s, 2);
-    rb_define_singleton_method(rb_cVector4, "add", rb_vector4_add_s, 2);
-    rb_define_singleton_method(rb_cVector4, "subtract", rb_vector4_subtract_s, 2);
-    rb_define_singleton_method(rb_cVector4, "multiply", rb_vector4_multiply_s, 2);
-    rb_define_singleton_method(rb_cVector4, "divide", rb_vector4_divide_s, 2);
-    rb_define_singleton_method(rb_cVector4, "negate", rb_vector4_negate_s, 1);
+    // rb_define_singleton_method(rb_cVector4, "abs", rb_vector4_abs_s, 1);
+    // rb_define_singleton_method(rb_cVector4, "sqrt", rb_vector4_sqrt_s, 1);
+    // rb_define_singleton_method(rb_cVector4, "dot", rb_vector4_dot_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "add", rb_vector4_add_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "subtract", rb_vector4_subtract_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "multiply", rb_vector4_multiply_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "divide", rb_vector4_divide_s, 2);
+    // rb_define_singleton_method(rb_cVector4, "negate", rb_vector4_negate_s, 1);
 }
 
 static inline void rb_vector4_normalize_intern(Vector4 *v, Vector4 *result) {
@@ -219,19 +219,81 @@ VALUE rb_vector4_zero_p(VALUE self) {
 }
 
 VALUE rb_vector4_add(VALUE self, VALUE other) {
-    return rb_vector4_add_s(CLASS_OF(self), self, other);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+    Vector4 *v2;
+    Data_Get_Struct(other, Vector4, v2);
+
+    result->x = v->x + v2->x;
+    result->y = v->y + v2->y;
+    result->z = v->z + v2->z;
+    result->w = v->w + v2->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_subtract(VALUE self, VALUE other) {
-    return rb_vector4_subtract_s(CLASS_OF(self), self, other);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+    Vector4 *v2;
+    Data_Get_Struct(other, Vector4, v2);
+
+    result->x = v->x - v2->x;
+    result->y = v->y - v2->y;
+    result->z = v->z - v2->z;
+    result->w = v->w - v2->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_multiply(VALUE self, VALUE other) {
-    return rb_vector4_multiply_s(CLASS_OF(self), self, other);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    if (NUMERIX_TYPE_P(other, rb_cVector4))
+    {
+        Vector4 *v2;
+        Data_Get_Struct(other, Vector4, v2);
+        result->x = v->x * v2->x;
+        result->y = v->x * v2->y;
+        result->z = v->z * v2->z;
+        result->w = v->w * v2->w;
+    }
+    else
+    {
+        float scalar = NUM2FLT(other);
+        result->x = v->x * scalar;
+        result->y = v->y * scalar;
+        result->z = v->z * scalar;
+        result->w = v->w * scalar;
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_divide(VALUE self, VALUE other) {
-    return rb_vector4_divide_s(CLASS_OF(self), self, other);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    if (NUMERIX_TYPE_P(other, rb_cVector4))
+    {
+        Vector4 *v2;
+        Data_Get_Struct(other, Vector4, v2);
+        result->x = v->x / v2->x;
+        result->y = v->y / v2->y;
+        result->z = v->z / v2->z;
+        result->w = v->w / v2->w;
+    }
+    else
+    {
+        float scalar = 1.0f / NUM2FLT(other);
+        result->x = v->x * scalar;
+        result->y = v->y * scalar;
+        result->z = v->z * scalar;
+        result->w = v->w * scalar;
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_equal(VALUE self, VALUE other) {
@@ -244,7 +306,15 @@ VALUE rb_vector4_equal(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector4_negate(VALUE self) {
-    return rb_vector4_negate_s(CLASS_OF(self), self);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    result->x = -v->x;
+    result->y = -v->y;
+    result->z = -v->z;
+    result->w = -v->w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_to_s(VALUE self) {
@@ -316,15 +386,42 @@ VALUE rb_vector4_max_value(VALUE self) {
 }
 
 VALUE rb_vector4_distance(VALUE self, VALUE other) {
-    return rb_vector4_distance_s(CLASS_OF(self), self, other);
+    Vector4 *v1, *v2;
+    Data_Get_Struct(self, Vector4, v1);
+    Data_Get_Struct(other, Vector4, v2);
+
+    float dx = v1->x - v2->x;
+    float dy = v1->y - v2->y;
+    float dz = v1->z - v2->z;
+    float dw = v1->w - v2->w;
+
+    return DBL2NUM(sqrtf(dx * dx + dy * dy + dz * dz + dw * dw));
 }
 
 VALUE rb_vector4_distance_squared(VALUE self, VALUE other) {
-    return rb_vector4_distance_squared_s(CLASS_OF(self), self, other);
+    Vector4 *v1, *v2;
+    Data_Get_Struct(self, Vector4, v1);
+    Data_Get_Struct(other, Vector4, v2);
+
+    float dx = v1->x - v2->x;
+    float dy = v1->y - v2->y;
+    float dz = v1->z - v2->z;
+    float dw = v1->w - v2->w;
+
+    return DBL2NUM(dx * dx + dy * dy + dz * dz + dw * dw);
 }
 
 VALUE rb_vector4_normalize(VALUE self) {
-    return rb_vector4_normalize_s(CLASS_OF(self), self);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+    result->x = v->x * inv;
+    result->y = v->y * inv;
+    result->z = v->z * inv;
+    result->w = v->w * inv;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_lerp(VALUE self, VALUE other, VALUE amount) {
@@ -336,15 +433,35 @@ VALUE rb_vector4_transform(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector4_abs(VALUE self) {
-    return rb_vector4_abs_s(CLASS_OF(self), self);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    result->x = fabsf(v->x);
+    result->y = fabsf(v->y);
+    result->z = fabsf(v->z);
+    result->w = fabsf(v->w);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_sqrt(VALUE self) {
-    return rb_vector4_sqrt_s(CLASS_OF(self), self);
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    result->x = sqrtf(v->x);
+    result->y = sqrtf(v->y);
+    result->z = sqrtf(v->z);
+    result->w = sqrtf(v->w);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector4_dot(VALUE self, VALUE other) {
-    return rb_vector4_dot_s(CLASS_OF(self), self, other);
+    Vector4 *v1, *v2;
+    Data_Get_Struct(self, Vector4, v1);
+    Data_Get_Struct(other, Vector4, v2);
+
+    return DBL2NUM(v1->x * v2->x + v1->y * v2->y + v1->z * v2->z + v1->w * v2->w);
 }
 
 VALUE rb_vector4_clamp(VALUE self, VALUE min, VALUE max) {
@@ -395,45 +512,6 @@ VALUE rb_vector4_clamp_bang(VALUE self, VALUE min, VALUE max) {
     return self;
 }
 
-static inline VALUE rb_vector4_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector4 *v1, *v2;
-    Data_Get_Struct(vec1, Vector4, v1);
-    Data_Get_Struct(vec2, Vector4, v2);
-
-    float dx = v1->x - v2->x;
-    float dy = v1->y - v2->y;
-    float dz = v1->z - v2->z;
-    float dw = v1->w - v2->w;
-
-    return DBL2NUM(sqrtf(dx * dx + dy * dy + dz * dz + dw * dw));
-}
-
-static inline VALUE rb_vector4_distance_squared_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector4 *v1, *v2;
-    Data_Get_Struct(vec1, Vector4, v1);
-    Data_Get_Struct(vec2, Vector4, v2);
-
-    float dx = v1->x - v2->x;
-    float dy = v1->y - v2->y;
-    float dz = v1->z - v2->z;
-    float dw = v1->w - v2->w;
-
-    return DBL2NUM(dx * dx + dy * dy + dz * dz + dw * dw);
-}
-
-static inline VALUE rb_vector4_normalize_s(VALUE klass, VALUE vector4) {
-    Vector4 *v, *result;
-    Data_Get_Struct(vector4, Vector4, v);
-    result = ALLOC(Vector4);
-
-    float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-    result->x = v->x * inv;
-    result->y = v->y * inv;
-    result->z = v->z * inv;
-    result->w = v->w * inv;
-
-    return NUMERIX_WRAP(klass, result);
-}
 
 static inline VALUE rb_vector4_clamp_s(VALUE klass, VALUE vector, VALUE minimum, VALUE maximum) {
     Vector4 *v, *result;
@@ -621,13 +699,6 @@ static inline VALUE rb_vector4_transform_s(VALUE klass, VALUE vector, VALUE matr
     return NUMERIX_WRAP(klass, result);
 }
 
-static inline VALUE rb_vector4_dot_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector4 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector4, v1);
-    Data_Get_Struct(vec2, Vector4, v2);
-
-    return DBL2NUM(v1->x * v2->x + v1->y * v2->y + v1->z * v2->z + v1->w * v2->w);
-}
 
 static inline VALUE rb_vector4_min_s(VALUE klass, VALUE vec1, VALUE vec2) {
     Vector4 *v1, *v2, *result;
@@ -653,123 +724,6 @@ static inline VALUE rb_vector4_max_s(VALUE klass, VALUE vec1, VALUE vec2) {
     result->y = NUMERIX_MAX(v1->y, v2->y);
     result->z = NUMERIX_MAX(v1->z, v2->z);
     result->w = NUMERIX_MAX(v1->w, v2->w);
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector4_abs_s(VALUE klass, VALUE vec) {
-    Vector4 *v, *result;
-    Data_Get_Struct(vec, Vector4, v);
-    result = ALLOC(Vector4);
-
-    result->x = fabsf(v->x);
-    result->y = fabsf(v->y);
-    result->z = fabsf(v->z);
-    result->w = fabsf(v->w);
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector4_sqrt_s(VALUE klass, VALUE vec) {
-    Vector4 *v, *result;
-    Data_Get_Struct(vec, Vector4, v);
-    result = ALLOC(Vector4);
-
-    result->x = sqrtf(v->x);
-    result->y = sqrtf(v->y);
-    result->z = sqrtf(v->z);
-    result->w = sqrtf(v->w);
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector4_add_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector4 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector4, v1);
-    Data_Get_Struct(vec2, Vector4, v2);
-    result = ALLOC(Vector4);
-
-    result->x = v1->x + v2->x;
-    result->y = v1->y + v2->y;
-    result->z = v1->z + v2->z;
-    result->w = v1->w + v2->w;
-
-    return NUMERIX_WRAP(klass, result); 
-}
-
-static inline VALUE rb_vector4_subtract_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector4 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector4, v1);
-    Data_Get_Struct(vec2, Vector4, v2);
-    result = ALLOC(Vector4);
-
-    result->x = v1->x - v2->x;
-    result->y = v1->y - v2->y;
-    result->z = v1->z - v2->z;
-    result->w = v1->w - v2->w;
-
-    return NUMERIX_WRAP(klass, result); 
-}
-
-static inline VALUE rb_vector4_multiply_s(VALUE klass, VALUE vec, VALUE other) {
-    Vector4 *v1, *result;
-    Data_Get_Struct(vec, Vector4, v1);
-    result = ALLOC(Vector4);
-
-    if (NUMERIX_TYPE_P(other, rb_cVector4))
-    {
-        Vector4 *v2;
-        Data_Get_Struct(other, Vector4, v2);
-        result->x = v1->x * v2->x;
-        result->y = v1->x * v2->y;
-        result->z = v1->z * v2->z;
-        result->w = v1->w * v2->w;
-    }
-    else
-    {
-        float scalar = NUM2FLT(other);
-        result->x = v1->x * scalar;
-        result->y = v1->y * scalar;
-        result->z = v1->z * scalar;
-        result->w = v1->w * scalar;
-    }
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector4_divide_s(VALUE klass, VALUE vec, VALUE other) {
-    Vector4 *v1, *result;
-    Data_Get_Struct(vec, Vector4, v1);
-    result = ALLOC(Vector4);
-
-    if (NUMERIX_TYPE_P(other, rb_cVector4))
-    {
-        Vector4 *v2;
-        Data_Get_Struct(other, Vector4, v2);
-        result->x = v1->x / v2->x;
-        result->y = v1->y / v2->y;
-        result->z = v1->z / v2->z;
-        result->w = v1->w / v2->w;
-    }
-    else
-    {
-        float scalar = 1.0f / NUM2FLT(other);
-        result->x = v1->x * scalar;
-        result->y = v1->y * scalar;
-        result->z = v1->z * scalar;
-        result->w = v1->w * scalar;
-    }
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector4_negate_s(VALUE klass, VALUE vec) {
-    Vector4 *v, *result;
-    Data_Get_Struct(vec, Vector4, v);
-    result = ALLOC(Vector4);
-
-    result->x = -v->x;
-    result->y = -v->y;
-    result->z = -v->z;
-    result->w = -v->w;
 
     return NUMERIX_WRAP(klass, result);
 }

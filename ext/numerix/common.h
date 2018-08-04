@@ -83,6 +83,11 @@ typedef struct Matrix4x4 {
     float m44; /* Value at row 4, column 4 of the matrix. */
 } Matrix4x4;
 
+typedef struct BasicVector {
+    int count;
+    float *values;
+} BasicVector;
+
 extern VALUE rb_mNumerix;
 extern VALUE rb_cNumerixStruct;
 extern VALUE rb_cVectorBase;

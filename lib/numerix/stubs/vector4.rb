@@ -379,18 +379,6 @@ module Numerix
       def create_norm(x, y, z, w)
       end
 
-      # @return [Float]
-      def distance
-      end
-
-      # @return [Float]
-      def distance_squared
-      end
-
-      # @return [Vector4]
-      def normalize(vector4)
-      end
-
       # @return [Vector4]
       def clamp(vector, min, max)
       end
@@ -409,38 +397,6 @@ module Numerix
 
       # @return [Vector4]
       def max(vector, other)
-      end
-
-      # @return [Vector4]
-      def abs(vector)
-      end
-
-      # @return [Vector4]
-      def sqrt(vector)
-      end
-
-      # @return [Float]
-      def dot(vector, other)
-      end
-
-      # @return [Vector4]
-      def add(vector, other)
-      end
-
-      # @return [Vector4]
-      def subtract(vector, other)
-      end
-
-      # @return [Vector4]
-      def multiply(vector, other)
-      end
-
-      # @return [Vector4]
-      def divide(vector, other)
-      end
-
-      # @return [Vector4]
-      def negate(vector)
       end
     end
   end

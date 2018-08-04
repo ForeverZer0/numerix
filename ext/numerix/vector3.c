@@ -60,25 +60,25 @@ void Init_vector3(VALUE outer) {
     rb_define_singleton_method(rb_cVector3, "unit_y", rb_vector3_unit_y, 0);
     rb_define_singleton_method(rb_cVector3, "unit_z", rb_vector3_unit_z, 0);
     rb_define_singleton_method(rb_cVector3, "create_norm", rb_vector3_create_norm, 3);
-    rb_define_singleton_method(rb_cVector3, "distance", rb_vector3_distance_s, 2);
-    rb_define_singleton_method(rb_cVector3, "distance_squared", rb_vector3_distance_squared_s, 2);
-    rb_define_singleton_method(rb_cVector3, "normalize", rb_vector3_normalize_s, 1);
-    rb_define_singleton_method(rb_cVector3, "cross", rb_vector3_cross_s, 2);
-    rb_define_singleton_method(rb_cVector3, "reflect", rb_vector3_reflect_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "distance", rb_vector3_distance_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "distance_squared", rb_vector3_distance_squared_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "normalize", rb_vector3_normalize_s, 1);
+    // rb_define_singleton_method(rb_cVector3, "cross", rb_vector3_cross_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "reflect", rb_vector3_reflect_s, 2);
     rb_define_singleton_method(rb_cVector3, "clamp", rb_vector3_clamp_s, 3);
     rb_define_singleton_method(rb_cVector3, "lerp", rb_vector3_lerp_s, 3);
     rb_define_singleton_method(rb_cVector3, "transform", rb_vector3_transform_s, 2);
     rb_define_singleton_method(rb_cVector3, "transform_normal", rb_vector3_transform_normal_s, 2);
     rb_define_singleton_method(rb_cVector3, "min", rb_vector3_min_s, 2);
     rb_define_singleton_method(rb_cVector3, "max", rb_vector3_max_s, 2);
-    rb_define_singleton_method(rb_cVector3, "abs", rb_vector3_abs_s, 1);
-    rb_define_singleton_method(rb_cVector3, "sqrt", rb_vector3_sqrt_s, 1);
-    rb_define_singleton_method(rb_cVector3, "dot", rb_vector3_dot_s, 2);
-    rb_define_singleton_method(rb_cVector3, "add", rb_vector3_add_s, 2);
-    rb_define_singleton_method(rb_cVector3, "subtract", rb_vector3_subtract_s, 2);
-    rb_define_singleton_method(rb_cVector3, "multiply", rb_vector3_multiply_s, 2);
-    rb_define_singleton_method(rb_cVector3, "divide", rb_vector3_divide_s, 2);
-    rb_define_singleton_method(rb_cVector3, "negate", rb_vector3_negate_s, 1);
+    // rb_define_singleton_method(rb_cVector3, "abs", rb_vector3_abs_s, 1);
+    // rb_define_singleton_method(rb_cVector3, "sqrt", rb_vector3_sqrt_s, 1);
+    // rb_define_singleton_method(rb_cVector3, "dot", rb_vector3_dot_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "add", rb_vector3_add_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "subtract", rb_vector3_subtract_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "multiply", rb_vector3_multiply_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "divide", rb_vector3_divide_s, 2);
+    // rb_define_singleton_method(rb_cVector3, "negate", rb_vector3_negate_s, 1);
 }
 
 static inline void rb_vector3_cross_intern(Vector3 *vec1, Vector3 *vec2, Vector3 *result) {
@@ -181,19 +181,75 @@ VALUE rb_vector3_length_squared(VALUE self) {
 }
 
 VALUE rb_vector3_add(VALUE self, VALUE other) {
-    return rb_vector3_add_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    result = ALLOC(Vector3);
+
+    result->x = v1->x + v2->x;
+    result->y = v1->y + v2->y;
+    result->z = v1->z + v2->z;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result); 
 }
 
 VALUE rb_vector3_subtract(VALUE self, VALUE other) {
-    return rb_vector3_subtract_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    result = ALLOC(Vector3);
+
+    result->x = v1->x - v2->x;
+    result->y = v1->y - v2->y;
+    result->z = v1->z - v2->z;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result); 
 }
 
 VALUE rb_vector3_multiply(VALUE self, VALUE other) {
-    return rb_vector3_multiply_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    result = ALLOC(Vector3);
+
+    if (NUMERIX_TYPE_P(other, rb_cVector3))
+    {
+        Vector3 *v2;
+        Data_Get_Struct(other, Vector3, v2);
+        result->x = v1->x * v2->x;
+        result->y = v1->x * v2->y;
+        result->z = v1->z * v2->z;
+    }
+    else
+    {
+        float scalar = NUM2FLT(other);
+        result->x = v1->x * scalar;
+        result->y = v1->y * scalar;
+        result->z = v1->z * scalar;
+    }
+    return NUMERIX_WRAP(CLASS_OF(self), result); 
 }
 
 VALUE rb_vector3_divide(VALUE self, VALUE other) {
-    return rb_vector3_divide_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    result = ALLOC(Vector3);
+
+    if (NUMERIX_TYPE_P(other, rb_cVector3))
+    {
+        Vector3 *v2;
+        Data_Get_Struct(other, Vector3, v2);
+        result->x = v1->x / v2->x;
+        result->y = v1->y / v2->y;
+        result->z = v1->z / v2->z;
+    }
+    else
+    {
+        float scalar = 1.0f / NUM2FLT(other);
+        result->x = v1->x * scalar;
+        result->y = v1->y * scalar;
+        result->z = v1->z * scalar;
+    }
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_equal(VALUE self, VALUE other) {
@@ -206,7 +262,15 @@ VALUE rb_vector3_equal(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector3_negate(VALUE self) {
-    return rb_vector3_negate_s(CLASS_OF(self), self);
+    Vector3 *v, *result;
+    Data_Get_Struct(self, Vector3, v);
+    result = ALLOC(Vector3);
+
+    result->x = -v->x;
+    result->y = -v->y;
+    result->z = -v->z;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_to_s(VALUE self) {
@@ -279,19 +343,54 @@ VALUE rb_vector3_max_value(VALUE self) {
 }
 
 VALUE rb_vector3_distance(VALUE self, VALUE other) {
-    return rb_vector3_distance_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+
+    float dx = v1->x - v2->x;
+    float dy = v1->y - v2->y;
+    float dz = v1->z - v2->z;
+
+    return DBL2NUM(sqrtf(dx * dx + dy * dy + dz * dz));
 }
 
 VALUE rb_vector3_distance_squared(VALUE self, VALUE other) {
-    return rb_vector3_distance_squared_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+
+    float dx = v1->x - v2->x;
+    float dy = v1->y - v2->y;
+    float dz = v1->z - v2->z;
+
+    return DBL2NUM(dx * dx + dy * dy + dz * dz);
 }
 
 VALUE rb_vector3_normalize(VALUE self) {
-    return rb_vector3_normalize_s(CLASS_OF(self), self);
+    VECTOR3();
+    Vector3 *result = ALLOC(Vector3); 
+
+    float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+    result->x = v->x * inv;
+    result->y = v->y * inv;
+    result->z = v->z * inv;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_lerp(VALUE self, VALUE other, VALUE amount) {
-    return rb_vector3_lerp_s(CLASS_OF(self), self, other, amount);
+    Vector3 *v1, *v2, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    result = ALLOC(Vector3);
+
+    float w = NUMERIX_CLAMP(NUM2FLT(amount), 0.0f, 1.0f);
+
+    result->x = v1->x + (v2->x - v1->x) * w;
+    result->y = v1->y + (v2->y - v1->y) * w;
+    result->z = v1->z + (v2->z - v1->z) * w;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_transform(VALUE self, VALUE other) {
@@ -299,15 +398,33 @@ VALUE rb_vector3_transform(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector3_abs(VALUE self) {
-    return rb_vector3_abs_s(CLASS_OF(self), self);
+    VECTOR3();
+    Vector3 *result = ALLOC(Vector3); 
+
+    result->x = fabsf(v->x);
+    result->y = fabsf(v->y);
+    result->z = fabsf(v->z);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_sqrt(VALUE self) {
-    return rb_vector3_sqrt_s(CLASS_OF(self), self);
+    VECTOR3();
+    Vector3 *result = ALLOC(Vector3); 
+
+    result->x = sqrtf(v->x);
+    result->y = sqrtf(v->y);
+    result->z = sqrtf(v->z);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_dot(VALUE self, VALUE other) {
-    return rb_vector3_dot_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+
+    return DBL2NUM(v1->x * v2->x + v1->y * v2->y + v1->z * v2->z);
 }
 
 VALUE rb_vector3_clamp(VALUE self, VALUE min, VALUE max) {
@@ -366,7 +483,16 @@ VALUE rb_vector3_zero_p(VALUE self) {
 }
 
 VALUE rb_vector3_cross(VALUE self, VALUE other) {
-    return rb_vector3_cross_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    result = ALLOC(Vector3);
+
+    result->x = v1->y * v2->z - v1->z * v2->y;
+    result->y = v1->z * v2->x - v1->x * v2->z;
+    result->z = v1->x * v2->y - v1->y * v2->x;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_cross_bang(VALUE self, VALUE other) {
@@ -382,7 +508,17 @@ VALUE rb_vector3_cross_bang(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector3_reflect(VALUE self, VALUE other) {
-    return rb_vector3_reflect_s(CLASS_OF(self), self, other);
+    Vector3 *v1, *v2, *result;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    result = ALLOC(Vector3);
+
+    float dot = v1->x * v2->x + v1->y * v2->y + v1->z * v2->z;
+    result->x = v1->x = (v2->x * dot * 2.0f);
+    result->y = v1->y = (v2->y * dot * 2.0f);
+    result->z = v1->z = (v2->z * dot * 2.0f);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_reflect_bang(VALUE self, VALUE other) {
@@ -396,70 +532,6 @@ VALUE rb_vector3_reflect_bang(VALUE self, VALUE other) {
     v1->z = v1->z = (v2->z * dot * 2.0f);
 
     return self;
-}
-
-static inline VALUE rb_vector3_distance_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-
-    float dx = v1->x - v2->x;
-    float dy = v1->y - v2->y;
-    float dz = v1->z - v2->z;
-
-    return DBL2NUM(sqrtf(dx * dx + dy * dy + dz * dz));
-}
-
-static inline VALUE rb_vector3_distance_squared_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-
-    float dx = v1->x - v2->x;
-    float dy = v1->y - v2->y;
-    float dz = v1->z - v2->z;
-
-    return DBL2NUM(dx * dx + dy * dy + dz * dz);
-}
-
-static inline VALUE rb_vector3_normalize_s(VALUE klass, VALUE vector3) {
-    Vector3 *v, *result;
-    Data_Get_Struct(vector3, Vector3, v);
-    result = ALLOC(Vector3);
-
-    float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
-    result->x = v->x * inv;
-    result->y = v->y * inv;
-    result->z = v->z * inv;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_cross_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-    result = ALLOC(Vector3);
-
-    result->x = v1->y * v2->z - v1->z * v2->y;
-    result->y = v1->z * v2->x - v1->x * v2->z;
-    result->z = v1->x * v2->y - v1->y * v2->x;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_reflect_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-    result = ALLOC(Vector3);
-
-    float dot = v1->x * v2->x + v1->y * v2->y + v1->z * v2->z;
-    result->x = v1->x = (v2->x * dot * 2.0f);
-    result->y = v1->y = (v2->y * dot * 2.0f);
-    result->z = v1->z = (v2->z * dot * 2.0f);
-
-    return NUMERIX_WRAP(klass, result);
 }
 
 static inline VALUE rb_vector3_clamp_s(VALUE klass, VALUE vector, VALUE minimum, VALUE maximum) {
@@ -575,14 +647,6 @@ static inline VALUE rb_vector3_transform_normal_s(VALUE klass, VALUE vector, VAL
     return NUMERIX_WRAP(klass, result);
 }
 
-static inline VALUE rb_vector3_dot_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-
-    return DBL2NUM(v1->x * v2->x + v1->y * v2->y + v1->z * v2->z);
-}
-
 static inline VALUE rb_vector3_min_s(VALUE klass, VALUE vec1, VALUE vec2) {
     Vector3 *v1, *v2, *result;
     Data_Get_Struct(vec1, Vector3, v1);
@@ -605,114 +669,6 @@ static inline VALUE rb_vector3_max_s(VALUE klass, VALUE vec1, VALUE vec2) {
     result->x = NUMERIX_MAX(v1->x, v2->x);
     result->y = NUMERIX_MAX(v1->y, v2->y);
     result->z = NUMERIX_MAX(v1->z, v2->z);
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_abs_s(VALUE klass, VALUE vec) {
-    Vector3 *v, *result;
-    Data_Get_Struct(vec, Vector3, v);
-    result = ALLOC(Vector3);
-
-    result->x = fabsf(v->x);
-    result->y = fabsf(v->y);
-    result->z = fabsf(v->z);
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_sqrt_s(VALUE klass, VALUE vec) {
-    Vector3 *v, *result;
-    Data_Get_Struct(vec, Vector3, v);
-    result = ALLOC(Vector3);
-
-    result->x = sqrtf(v->x);
-    result->y = sqrtf(v->y);
-    result->z = sqrtf(v->z);
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_add_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-    result = ALLOC(Vector3);
-
-    result->x = v1->x + v2->x;
-    result->y = v1->y + v2->y;
-    result->z = v1->z + v2->z;
-
-    return NUMERIX_WRAP(klass, result); 
-}
-
-static inline VALUE rb_vector3_subtract_s(VALUE klass, VALUE vec1, VALUE vec2) {
-    Vector3 *v1, *v2, *result;
-    Data_Get_Struct(vec1, Vector3, v1);
-    Data_Get_Struct(vec2, Vector3, v2);
-    result = ALLOC(Vector3);
-
-    result->x = v1->x - v2->x;
-    result->y = v1->y - v2->y;
-    result->z = v1->z - v2->z;
-
-    return NUMERIX_WRAP(klass, result); 
-}
-
-static inline VALUE rb_vector3_multiply_s(VALUE klass, VALUE vec, VALUE other) {
-    Vector3 *v1, *result;
-    Data_Get_Struct(vec, Vector3, v1);
-    result = ALLOC(Vector3);
-
-    if (NUMERIX_TYPE_P(other, rb_cVector3))
-    {
-        Vector3 *v2;
-        Data_Get_Struct(other, Vector3, v2);
-        result->x = v1->x * v2->x;
-        result->y = v1->x * v2->y;
-        result->z = v1->z * v2->z;
-    }
-    else
-    {
-        float scalar = NUM2FLT(other);
-        result->x = v1->x * scalar;
-        result->y = v1->y * scalar;
-        result->z = v1->z * scalar;
-    }
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_divide_s(VALUE klass, VALUE vec, VALUE other) {
-    Vector3 *v1, *result;
-    Data_Get_Struct(vec, Vector3, v1);
-    result = ALLOC(Vector3);
-
-    if (NUMERIX_TYPE_P(other, rb_cVector3))
-    {
-        Vector3 *v2;
-        Data_Get_Struct(other, Vector3, v2);
-        result->x = v1->x / v2->x;
-        result->y = v1->y / v2->y;
-        result->z = v1->z / v2->z;
-    }
-    else
-    {
-        float scalar = 1.0f / NUM2FLT(other);
-        result->x = v1->x * scalar;
-        result->y = v1->y * scalar;
-        result->z = v1->z * scalar;
-    }
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_negate_s(VALUE klass, VALUE vec) {
-    Vector3 *v, *result;
-    Data_Get_Struct(vec, Vector3, v);
-    result = ALLOC(Vector3);
-
-    result->x = -v->x;
-    result->y = -v->y;
-    result->z = -v->z;
 
     return NUMERIX_WRAP(klass, result);
 }
