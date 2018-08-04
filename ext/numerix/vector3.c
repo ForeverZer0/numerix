@@ -60,38 +60,12 @@ void Init_vector3(VALUE outer) {
     rb_define_singleton_method(rb_cVector3, "unit_y", rb_vector3_unit_y, 0);
     rb_define_singleton_method(rb_cVector3, "unit_z", rb_vector3_unit_z, 0);
     rb_define_singleton_method(rb_cVector3, "create_norm", rb_vector3_create_norm, 3);
-    // rb_define_singleton_method(rb_cVector3, "distance", rb_vector3_distance_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "distance_squared", rb_vector3_distance_squared_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "normalize", rb_vector3_normalize_s, 1);
-    // rb_define_singleton_method(rb_cVector3, "cross", rb_vector3_cross_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "reflect", rb_vector3_reflect_s, 2);
     rb_define_singleton_method(rb_cVector3, "clamp", rb_vector3_clamp_s, 3);
     rb_define_singleton_method(rb_cVector3, "lerp", rb_vector3_lerp_s, 3);
     rb_define_singleton_method(rb_cVector3, "transform", rb_vector3_transform_s, 2);
     rb_define_singleton_method(rb_cVector3, "transform_normal", rb_vector3_transform_normal_s, 2);
     rb_define_singleton_method(rb_cVector3, "min", rb_vector3_min_s, 2);
     rb_define_singleton_method(rb_cVector3, "max", rb_vector3_max_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "abs", rb_vector3_abs_s, 1);
-    // rb_define_singleton_method(rb_cVector3, "sqrt", rb_vector3_sqrt_s, 1);
-    // rb_define_singleton_method(rb_cVector3, "dot", rb_vector3_dot_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "add", rb_vector3_add_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "subtract", rb_vector3_subtract_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "multiply", rb_vector3_multiply_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "divide", rb_vector3_divide_s, 2);
-    // rb_define_singleton_method(rb_cVector3, "negate", rb_vector3_negate_s, 1);
-}
-
-static inline void rb_vector3_cross_intern(Vector3 *vec1, Vector3 *vec2, Vector3 *result) {
-    result->x = vec1->y * vec2->z - vec1->z * vec2->y;
-    result->y = vec1->z * vec2->x - vec1->x * vec2->z;
-    result->z = vec1->x * vec2->y - vec1->y * vec2->x;
-}
-
-static inline void rb_vector3_normalize_intern(Vector3 *v, Vector3 *result) {
-    float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
-    result->x = v->x * inv;
-    result->y = v->y * inv;
-    result->z = v->z * inv;
 }
 
 static VALUE rb_vector3_alloc(VALUE klass) {

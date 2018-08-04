@@ -16,6 +16,12 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "column", rb_matrix4x4_column, 1);
     rb_define_method(rb_cMatrix4x4, "each_row", rb_matrix4x4_each_row, 0);
     rb_define_method(rb_cMatrix4x4, "each_column", rb_matrix4x4_each_column, 0);
+    rb_define_method(rb_cMatrix4x4, "invert", rb_matrix4x4_invert, 0);
+    rb_define_method(rb_cMatrix4x4, "invert!", rb_matrix4x4_invert_bang, 0);
+    rb_define_method(rb_cMatrix4x4, "transform", rb_matrix4x4_transform, 1);
+    rb_define_method(rb_cMatrix4x4, "transpose", rb_matrix4x4_transpose, 0);
+    rb_define_method(rb_cMatrix4x4, "lerp", rb_matrix4x4_lerp, 2);
+    rb_define_method(rb_cMatrix4x4, "lerp!", rb_matrix4x4_lerp_bang, 2);
 
     // Conversion
     rb_define_method(rb_cMatrix4x4, "to_s", rb_matrix4x4_to_s, 0);
@@ -26,7 +32,7 @@ void Init_matrix4x4(VALUE outer) {
     // Operators
     rb_define_method(rb_cMatrix4x4, "+", rb_matrix4x4_add, 1);
     rb_define_method(rb_cMatrix4x4, "-", rb_matrix4x4_subtract, 1);
-    rb_define_method(rb_cMatrix4x4, "*", rb_matrix4x4_mulitiply, 1);
+    rb_define_method(rb_cMatrix4x4, "*", rb_matrix4x4_multiply, 1);
     rb_define_method(rb_cMatrix4x4, "-@", rb_matrix4x4_negate, 0);
     rb_define_method(rb_cMatrix4x4, "==", rb_matrix4x4_equal, 1);
     rb_define_method(rb_cMatrix4x4, "[]", rb_matrix4x4_aref, -1);
@@ -53,14 +59,8 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix4x4, "from_yaw_pitch_roll", rb_matrix4x4_from_yaw_pitch_roll, 3);
     rb_define_singleton_method(rb_cMatrix4x4, "create_shadow", rb_matrix4x4_create_shadow, 2);
     rb_define_singleton_method(rb_cMatrix4x4, "create_reflection", rb_matrix4x4_create_reflection, 1);
-    rb_define_singleton_method(rb_cMatrix4x4, "invert", rb_matrix4x4_invert_s, 1);
-    rb_define_singleton_method(rb_cMatrix4x4, "transform", rb_matrix4x4_transform_s, 2);
-    rb_define_singleton_method(rb_cMatrix4x4, "transpose", rb_matrix4x4_transpose_s, 1);
+
     rb_define_singleton_method(rb_cMatrix4x4, "lerp", rb_matrix4x4_lerp_s, 3);
-    rb_define_singleton_method(rb_cMatrix4x4, "negate", rb_matrix4x4_negate_s, 1);
-    rb_define_singleton_method(rb_cMatrix4x4, "add", rb_matrix4x4_add_s, 2);
-    rb_define_singleton_method(rb_cMatrix4x4, "subtract", rb_matrix4x4_subtract_s, 2);
-    rb_define_singleton_method(rb_cMatrix4x4, "multiply", rb_matrix4x4_multiply_s, 2);
 
 }
 
@@ -90,7 +90,6 @@ static inline void numerix_vec3_cross(Vector3 *v1, Vector3 *v2, Vector3 *result)
 static inline float numerix_vec3_dot(Vector3 *v1, Vector3 *v2) {
     return v1->x * v2->x + v1->y * v2->y + v1->z * v2->z;
 }
-
 
 static VALUE rb_matrix4x4_allocate(VALUE klass) {
     Matrix4x4 *m = ALLOC(Matrix4x4);
@@ -154,6 +153,73 @@ VALUE rb_matrix4x4_initialize(int argc, VALUE *argv, VALUE self) {
         rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 16)", argc);
 
     return Qnil;
+}
+
+VALUE rb_matrix4x4_lerp(VALUE self, VALUE other, VALUE amount) {
+    Matrix4x4 *m1, *m2, *result;
+    Data_Get_Struct(self, Matrix4x4, m1);
+    Data_Get_Struct(other, Matrix4x4, m2);
+    result = ALLOC(Matrix4x4);
+    float weight = NUMERIX_CLAMP(NUM2FLT(amount), 0.0f, 1.0f);
+
+    // First row
+    result->m11 = m1->m11 + (m2->m11 - m1->m11) * weight;
+    result->m12 = m1->m12 + (m2->m12 - m1->m12) * weight;
+    result->m13 = m1->m13 + (m2->m13 - m1->m13) * weight;
+    result->m14 = m1->m14 + (m2->m14 - m1->m14) * weight;
+
+    // Second row
+    result->m21 = m1->m21 + (m2->m21 - m1->m21) * weight;
+    result->m22 = m1->m22 + (m2->m22 - m1->m22) * weight;
+    result->m23 = m1->m23 + (m2->m23 - m1->m23) * weight;
+    result->m24 = m1->m24 + (m2->m24 - m1->m24) * weight;
+
+    // Third row
+    result->m31 = m1->m31 + (m2->m31 - m1->m31) * weight;
+    result->m32 = m1->m32 + (m2->m32 - m1->m32) * weight;
+    result->m33 = m1->m33 + (m2->m33 - m1->m33) * weight;
+    result->m34 = m1->m34 + (m2->m34 - m1->m34) * weight;
+
+    // Fourth row
+    result->m41 = m1->m41 + (m2->m41 - m1->m41) * weight;
+    result->m42 = m1->m42 + (m2->m42 - m1->m42) * weight;
+    result->m43 = m1->m43 + (m2->m43 - m1->m43) * weight;
+    result->m44 = m1->m44 + (m2->m44 - m1->m44) * weight;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_matrix4x4_lerp_bang(VALUE self, VALUE other, VALUE amount) {
+    Matrix4x4 *m1, *m2;
+    Data_Get_Struct(self, Matrix4x4, m1);
+    Data_Get_Struct(other, Matrix4x4, m2);
+    float weight = NUMERIX_CLAMP(NUM2FLT(amount), 0.0f, 1.0f);
+
+    // First row
+    m1->m11 = m1->m11 + (m2->m11 - m1->m11) * weight;
+    m1->m12 = m1->m12 + (m2->m12 - m1->m12) * weight;
+    m1->m13 = m1->m13 + (m2->m13 - m1->m13) * weight;
+    m1->m14 = m1->m14 + (m2->m14 - m1->m14) * weight;
+
+    // Second row
+    m1->m21 = m1->m21 + (m2->m21 - m1->m21) * weight;
+    m1->m22 = m1->m22 + (m2->m22 - m1->m22) * weight;
+    m1->m23 = m1->m23 + (m2->m23 - m1->m23) * weight;
+    m1->m24 = m1->m24 + (m2->m24 - m1->m24) * weight;
+
+    // Third row
+    m1->m31 = m1->m31 + (m2->m31 - m1->m31) * weight;
+    m1->m32 = m1->m32 + (m2->m32 - m1->m32) * weight;
+    m1->m33 = m1->m33 + (m2->m33 - m1->m33) * weight;
+    m1->m34 = m1->m34 + (m2->m34 - m1->m34) * weight;
+
+    // Fourth row
+    m1->m41 = m1->m41 + (m2->m41 - m1->m41) * weight;
+    m1->m42 = m1->m42 + (m2->m42 - m1->m42) * weight;
+    m1->m43 = m1->m43 + (m2->m43 - m1->m43) * weight;
+    m1->m44 = m1->m44 + (m2->m44 - m1->m44) * weight;
+
+    return self;
 }
 
 VALUE rb_matrix4x4_identity_p(VALUE self) {
@@ -238,22 +304,6 @@ VALUE rb_matrix4x4_to_s(VALUE self) {
     return rb_sprintf("{{%f, %f, %f, %f}, {%f, %f, %f, %f}, {%f, %f, %f, %f}, {%f, %f, %f, %f}}",
         m->m11, m->m12, m->m13, m->m14, m->m21, m->m22, m->m23, m->m24,
         m->m31, m->m32, m->m33, m->m34, m->m41, m->m42, m->m43, m->m44);
-}
-
-VALUE rb_matrix4x4_add(VALUE self, VALUE other) {
-    return rb_matrix4x4_add_s(CLASS_OF(self), self, other);
-}
-
-VALUE rb_matrix4x4_subtract(VALUE self, VALUE other) {
-    return rb_matrix4x4_subtract_s(CLASS_OF(self), self, other);
-}
-
-VALUE rb_matrix4x4_mulitiply(VALUE self, VALUE other) {
-    return rb_matrix4x4_multiply_s(CLASS_OF(self), self, other);
-}
-
-VALUE rb_matrix4x4_negate(VALUE self) {
-    return rb_matrix4x4_negate_s(CLASS_OF(self), self);
 }
 
 VALUE rb_matrix4x4_equal(VALUE self, VALUE other) {
@@ -470,7 +520,6 @@ VALUE rb_matrix4x4_aset(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong number of arguments (%d for 2, 3)", argc);
     return Qnil; 
 }
-
 
 VALUE rb_matrix4x4_identity(VALUE klass) {
     Matrix4x4 *m = ALLOC(Matrix4x4);
@@ -1300,10 +1349,10 @@ VALUE rb_matrix4x4_create_reflection(VALUE klass, VALUE plane) {
     return NUMERIX_WRAP(klass, result);
 }
 
-VALUE rb_matrix4x4_transform_s(VALUE klass, VALUE matrix, VALUE quaternion) {
+VALUE rb_matrix4x4_transform(VALUE self, VALUE quaternion) {
     Matrix4x4 *m, *result;
     Quaternion *rotation;
-    Data_Get_Struct(matrix, Matrix4x4, m);
+    Data_Get_Struct(self, Matrix4x4, m);
     Data_Get_Struct(quaternion, Quaternion, rotation);
 
     // Compute rotation matrix.
@@ -1359,13 +1408,12 @@ VALUE rb_matrix4x4_transform_s(VALUE klass, VALUE matrix, VALUE quaternion) {
     result->m43 = m->m41 * q13 + m->m42 * q23 + m->m43 * q33;
     result->m44 = m->m44;
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
-VALUE rb_matrix4x4_transpose_s(VALUE klass, VALUE matrix) {
-    Matrix4x4 *m, *result;
-    Data_Get_Struct(matrix, Matrix4x4, m);
-    result = ALLOC(Matrix4x4);
+VALUE rb_matrix4x4_transpose(VALUE self) {
+    MATRIX4X4();
+    Matrix4x4 *result = ALLOC(Matrix4x4);
 
     result->m11 = m->m11;
     result->m12 = m->m21;
@@ -1384,7 +1432,7 @@ VALUE rb_matrix4x4_transpose_s(VALUE klass, VALUE matrix) {
     result->m43 = m->m34;
     result->m44 = m->m44;
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_matrix4x4_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix2, VALUE amount) {
@@ -1421,10 +1469,9 @@ VALUE rb_matrix4x4_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix2, VALUE amoun
     return NUMERIX_WRAP(klass, result);
 }
 
-VALUE rb_matrix4x4_negate_s(VALUE klass, VALUE matrix) {
-    Matrix4x4 *m, *result;
-    Data_Get_Struct(matrix, Matrix4x4, m);
-    result = ALLOC(Matrix4x4);
+VALUE rb_matrix4x4_negate(VALUE self) {
+    MATRIX4X4();
+    Matrix4x4 *result = ALLOC(Matrix4x4);
 
     result->m11 = -m->m11;
     result->m12 = -m->m12;
@@ -1443,13 +1490,13 @@ VALUE rb_matrix4x4_negate_s(VALUE klass, VALUE matrix) {
     result->m43 = -m->m43;
     result->m44 = -m->m44;
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
-VALUE rb_matrix4x4_add_s(VALUE klass, VALUE matrix1, VALUE matrix2) {
+VALUE rb_matrix4x4_add(VALUE self, VALUE other) {
     Matrix4x4 *m1, *m2, *result;
-    Data_Get_Struct(matrix1, Matrix4x4, m1);
-    Data_Get_Struct(matrix2, Matrix4x4, m2);
+    Data_Get_Struct(self, Matrix4x4, m1);
+    Data_Get_Struct(other, Matrix4x4, m2);
     result = ALLOC(Matrix4x4);
 
     result->m11 = m1->m11 + m2->m11;
@@ -1469,13 +1516,13 @@ VALUE rb_matrix4x4_add_s(VALUE klass, VALUE matrix1, VALUE matrix2) {
     result->m43 = m1->m43 + m2->m43;
     result->m44 = m1->m44 + m2->m44;
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
-VALUE rb_matrix4x4_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2) {
+VALUE rb_matrix4x4_subtract(VALUE self, VALUE other) {
     Matrix4x4 *m1, *m2, *result;
-    Data_Get_Struct(matrix1, Matrix4x4, m1);
-    Data_Get_Struct(matrix2, Matrix4x4, m2);
+    Data_Get_Struct(self, Matrix4x4, m1);
+    Data_Get_Struct(other, Matrix4x4, m2);
     result = ALLOC(Matrix4x4);
 
     result->m11 = m1->m11 - m2->m11;
@@ -1495,12 +1542,12 @@ VALUE rb_matrix4x4_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2) {
     result->m43 = m1->m43 - m2->m43;
     result->m44 = m1->m44 - m2->m44;
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
-VALUE rb_matrix4x4_multiply_s(VALUE klass, VALUE matrix, VALUE other) {
+VALUE rb_matrix4x4_multiply(VALUE self, VALUE other) {
     Matrix4x4 *m1, *result;
-    Data_Get_Struct(matrix, Matrix4x4, m1);
+    Data_Get_Struct(self, Matrix4x4, m1);
     result = ALLOC(Matrix4x4);
 
     if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
@@ -1553,12 +1600,12 @@ VALUE rb_matrix4x4_multiply_s(VALUE klass, VALUE matrix, VALUE other) {
         result->m44 = m1->m44 * scalar;
     }
 
-    return NUMERIX_WRAP(klass, result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
-VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix) {
+VALUE rb_matrix4x4_invert(VALUE self) {
     Matrix4x4 *mat, *result;
-    Data_Get_Struct(matrix, Matrix4x4, mat);
+    Data_Get_Struct(self, Matrix4x4, mat);
     result = ALLOC(Matrix4x4);
     //                                       -1
     // If you have matrix M, inverse Matrix M   can compute
@@ -1717,5 +1764,77 @@ VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix) {
         result->m44 = +(a * fk_gj - b * ek_gi + c * ej_fi) * invDet;
     }
 
-    return NUMERIX_WRAP(klass, mat);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_matrix4x4_invert_bang(VALUE self) {
+    Matrix4x4 *mat;
+    Data_Get_Struct(self, Matrix4x4, mat);
+
+    float a = mat->m11, b = mat->m12, c = mat->m13, d = mat->m14;
+    float e = mat->m21, f = mat->m22, g = mat->m23, h = mat->m24;
+    float i = mat->m31, j = mat->m32, k = mat->m33, l = mat->m34;
+    float m = mat->m41, n = mat->m42, o = mat->m43, p = mat->m44;
+
+    float kp_lo = k * p - l * o;
+    float jp_ln = j * p - l * n;
+    float jo_kn = j * o - k * n;
+    float ip_lm = i * p - l * m;
+    float io_km = i * o - k * m;
+    float in_jm = i * n - j * m;
+
+    float a11 = +(f * kp_lo - g * jp_ln + h * jo_kn);
+    float a12 = -(e * kp_lo - g * ip_lm + h * io_km);
+    float a13 = +(e * jp_ln - f * ip_lm + h * in_jm);
+    float a14 = -(e * jo_kn - f * io_km + g * in_jm);
+
+    float det = a * a11 + b * a12 + c * a13 + d * a14;
+
+    if (fabsf(det) < FLT_EPSILON)
+    {
+        // invalid
+        float *matp = (float*) mat;
+        for (int i = 0; i < 16; i++)
+            matp[i] = NAN;
+    }
+    else
+    {
+        float invDet = 1.0f / det;
+
+        mat->m11 = a11 * invDet;
+        mat->m21 = a12 * invDet;
+        mat->m31 = a13 * invDet;
+        mat->m41 = a14 * invDet;
+
+        mat->m12 = -(b * kp_lo - c * jp_ln + d * jo_kn) * invDet;
+        mat->m22 = +(a * kp_lo - c * ip_lm + d * io_km) * invDet;
+        mat->m32 = -(a * jp_ln - b * ip_lm + d * in_jm) * invDet;
+        mat->m42 = +(a * jo_kn - b * io_km + c * in_jm) * invDet;
+
+        float gp_ho = g * p - h * o;
+        float fp_hn = f * p - h * n;
+        float fo_gn = f * o - g * n;
+        float ep_hm = e * p - h * m;
+        float eo_gm = e * o - g * m;
+        float en_fm = e * n - f * m;
+
+        mat->m13 = +(b * gp_ho - c * fp_hn + d * fo_gn) * invDet;
+        mat->m23 = -(a * gp_ho - c * ep_hm + d * eo_gm) * invDet;
+        mat->m33 = +(a * fp_hn - b * ep_hm + d * en_fm) * invDet;
+        mat->m43 = -(a * fo_gn - b * eo_gm + c * en_fm) * invDet;
+
+        float gl_hk = g * l - h * k;
+        float fl_hj = f * l - h * j;
+        float fk_gj = f * k - g * j;
+        float el_hi = e * l - h * i;
+        float ek_gi = e * k - g * i;
+        float ej_fi = e * j - f * i;
+
+        mat->m14 = -(b * gl_hk - c * fl_hj + d * fk_gj) * invDet;
+        mat->m24 = +(a * gl_hk - c * el_hi + d * ek_gi) * invDet;
+        mat->m34 = -(a * fl_hj - b * el_hi + d * ej_fi) * invDet;
+        mat->m44 = +(a * fk_gj - b * ek_gi + c * ej_fi) * invDet;
+    }
+
+    return self;
 }

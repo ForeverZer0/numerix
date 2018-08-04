@@ -33,7 +33,7 @@ VALUE rb_matrix4x4_translation_set(VALUE self, VALUE value);
 VALUE rb_matrix4x4_determinant(VALUE self);
 VALUE rb_matrix4x4_add(VALUE self, VALUE other);
 VALUE rb_matrix4x4_subtract(VALUE self, VALUE other);
-VALUE rb_matrix4x4_mulitiply(VALUE self, VALUE other);
+VALUE rb_matrix4x4_multiply(VALUE self, VALUE other);
 VALUE rb_matrix4x4_negate(VALUE self);
 VALUE rb_matrix4x4_equal(VALUE self, VALUE other);
 VALUE rb_matrix4x4_row(VALUE self, VALUE row);
@@ -42,6 +42,12 @@ VALUE rb_matrix4x4_each_row(VALUE self);
 VALUE rb_matrix4x4_each_column(VALUE self);
 VALUE rb_matrix4x4_aref(int argc, VALUE *argv, VALUE self);
 VALUE rb_matrix4x4_aset(int argc, VALUE *argv, VALUE self);
+VALUE rb_matrix4x4_invert(VALUE self);
+VALUE rb_matrix4x4_invert_bang(VALUE self);
+VALUE rb_matrix4x4_transform(VALUE self, VALUE quaternion);
+VALUE rb_matrix4x4_transpose(VALUE self);
+VALUE rb_matrix4x4_lerp(VALUE self, VALUE other, VALUE amount);
+VALUE rb_matrix4x4_lerp_bang(VALUE self, VALUE other, VALUE amount);
 
 // Conversion
 VALUE rb_matrix4x4_to_s(VALUE self);
@@ -70,14 +76,7 @@ VALUE rb_matrix4x4_from_quaternion(VALUE klass, VALUE quaternion);
 VALUE rb_matrix4x4_from_yaw_pitch_roll(VALUE klass, VALUE yaw, VALUE pitch, VALUE roll);
 VALUE rb_matrix4x4_create_shadow(VALUE klass, VALUE light, VALUE plane);
 VALUE rb_matrix4x4_create_reflection(VALUE klass, VALUE plane);
-VALUE rb_matrix4x4_invert_s(VALUE klass, VALUE matrix);
-VALUE rb_matrix4x4_transform_s(VALUE klass, VALUE matrix, VALUE quaternion);
-VALUE rb_matrix4x4_transpose_s(VALUE klass, VALUE matrix);
 VALUE rb_matrix4x4_lerp_s(VALUE klass, VALUE matrix1, VALUE matrix2, VALUE amount);
-VALUE rb_matrix4x4_negate_s(VALUE klass, VALUE matrix);
-VALUE rb_matrix4x4_add_s(VALUE klass, VALUE matrix1, VALUE matrix2);
-VALUE rb_matrix4x4_subtract_s(VALUE klass, VALUE matrix1, VALUE matrix2);
-VALUE rb_matrix4x4_multiply_s(VALUE klass, VALUE matrix, VALUE other);
 
 // Internal
 static inline void numerix_vec3_normalize(Vector3 *v);

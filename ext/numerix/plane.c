@@ -173,7 +173,7 @@ static inline VALUE rb_plane_transform_s(VALUE klass, VALUE plane, VALUE matrix)
 
     if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
     {
-        VALUE inverted = rb_matrix4x4_invert_s(CLASS_OF(matrix), matrix);
+        VALUE inverted = rb_matrix4x4_invert(matrix);
         Matrix4x4 *m;
         Data_Get_Struct(inverted, Matrix4x4, m);
 

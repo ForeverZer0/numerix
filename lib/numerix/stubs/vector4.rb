@@ -1,5 +1,6 @@
 module Numerix
 
+  
   ##
   # A structure encapsulating four single precision floating point values.
   class Vector4 < VectorBase
@@ -126,7 +127,7 @@ module Numerix
     # Linearly interpolates between this vector and another based on the given
     # weighting.
     #
-    # @param [Vector4] The source vector to interpolate between.
+    # @param vector [Vector4] The source vector to interpolate between.
     # @param amount [Float] Value between `0.0` and `1.0` indicating the weight
     #   of the given vector.
     #
@@ -140,7 +141,7 @@ module Numerix
     # Linearly interpolates between this vector and another based on the given
     # weighting, altering the values of this vector.
     #
-    # @param [Vector4] The source vector to interpolate between.
+    # @param vector [Vector4] The source vector to interpolate between.
     # @param amount [Float] Value between `0.0` and `1.0` indicating the weight
     #   of the given vector.
     #
@@ -351,51 +352,138 @@ module Numerix
 
     class << self
 
-      # @return [Vector4]
+      # @return [Vector4] the vector `<0.0, 0.0, 0.0, 0.0>`.
       def zero
       end
 
-      # @return [Vector4]
+      # @return [Vector4] the vector `<1.0, 1.0, 1.0, 1.0>`.
       def one
       end
 
-      # @return [Vector4]
+      # @return [Vector4] the vector `<1.0, 0.0, 0.0, 0.0>`.
       def unit_x
       end
 
-      # @return [Vector4]
+      # @return [Vector4] the vector `<0.0, 1.0, 0.0, 0.0>`.
       def unit_y
       end
 
-      # @return [Vector4]
+      # @return [Vector4] the vector `<0.0, 0.0, 1.0, 0.0>`.
       def unit_z
       end
 
-      # @return [Vector4]
+      # @return [Vector4] the vector `<0.0, 0.0, 0.0, 1.0>`.
       def unit_w
       end
 
-      # @return [Vector4]
+      ##
+      # Creates and returns a normalized vector from the specified components.
+      #
+      # This is more efficient than creating and then normalizing.
+      #
+      # @param x [Float] The X component of the vector.
+      # @param y [Float] The Y component of the vector.
+      # @param z [Float] The Z component of the vector.
+      # @param w [Float] The W component of the vector.
+      #
+      # @return [Vector4] the newly created normalized vector.
       def create_norm(x, y, z, w)
       end
 
-      # @return [Vector4]
+      ##
+      # Returns a vector that is result of clamping a vector between the
+      # specified minimum and maximum values.
+      #
+      # @overload clamp(min, max)
+      #   Clamps the vector's components between the specified values.
+      #
+      #   @param min [Float] The minimum value.
+      #   @param max [Float] The maximum value.
+      #
+      # @overload clamp(min, max)
+      #   Clamps the vector's on a component-wise basis between the minimum and
+      #   maximum values of the specified vectors.
+      #
+      #   @param min [Vector4] The minimum value.
+      #   @param max [Vector4] The maximum value.
+      #
+      # @return [Vector4] the result of clamping this vector.
       def clamp(vector, min, max)
       end
 
-      # @return [Vector4]
+      ##
+      # Linearly interpolates between two vectors based on the given weighting.
+      #
+      # @param vector1 [Vector4] The first source vector.
+      # @param vector2 [Vector4] The second source vector.
+      # @param amount [Float] Value between `0.0` and `1.0` indicating the
+      #   weight of the second source vector.
+      #
+      # @return [Vector4] the interpolated vector.
       def lerp(vector1, vector2, amount)
       end
 
-      # @return [Vector4]
+      ##
+      # Creates a Vector4 by transforming the specified vector and 
+      # transformation matrix or quaternion rotation.
+      #
+      # @overload transform(vector, matrix)
+      #   Transforms a vector by the given matrix.
+      #
+      #   @param vector [Vector2, Vector3, Vector4] The source vector.
+      #   @param matrix [Matrix4x4] The transformation matrix.
+      #
+      #   @return [Vector4] A transformed vector.
+      #
+      # @overload transform(vector, rotation)
+      #   Transforms a vector by the given Quaternion rotation value.
+      #
+      #   @param vector [Vector2, Vector3, Vector4] The source vector to rotate.
+      #   @param rotation [Quaternion] The rotation to apply.
+      #
+      #   @return [Vector4] A rotated vector.
       def transform(vector, other)
       end
 
-      # @return [Vector4]
+      ##
+      # Returns a vector with a minumum set of values. 
+      #
+      # @overload min(vector, other)
+      #   Returns a vector whose elements are the minimum of each of the pairs
+      #   of elements in the two source vectors.
+      #
+      #   @param vector [Vector4] The first source vector.
+      #   @param other [Vector4] The second source vector.
+      #
+      # @overload min(vector, value)
+      #   Returns a vector whose elements are the minimum of each of vector
+      #   element and the specified value.
+      #
+      #   @param vector [Vector4] The source vector.
+      #   @param value [Float] The minimum value.
+      #
+      # @return [Vector4] the minimized vector.
       def min(vector, other)
       end
 
-      # @return [Vector4]
+      ##
+      # Returns a vector with a maxumum set of values. 
+      #
+      # @overload max(vector, other)
+      #   Returns a vector whose elements are the maximum of each of the pairs
+      #   of elements in the two source vectors.
+      #
+      #   @param vector [Vector4] The first source vector.
+      #   @param other [Vector4] The second source vector.
+      #
+      # @overload max(vector, value)
+      #   Returns a vector whose elements are the maximum of each of vector
+      #   element and the specified value.
+      #
+      #   @param vector [Vector4] The source vector.
+      #   @param value [Float] The maximum value.
+      #
+      # @return [Vector4] the maximized vector.
       def max(vector, other)
       end
     end

@@ -55,25 +55,12 @@ void Init_vector2(VALUE outer) {
     rb_define_singleton_method(rb_cVector2, "unit_x", rb_vector2_unit_x, 0);
     rb_define_singleton_method(rb_cVector2, "unit_y", rb_vector2_unit_y, 0);
     rb_define_singleton_method(rb_cVector2, "create_norm", rb_vector2_create_norm, 2);
-    // rb_define_singleton_method(rb_cVector2, "distance", rb_vector2_distance_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "distance_squared", rb_vector2_distance_squared_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "normalize", rb_vector2_normalize_s, 1);
-    // rb_define_singleton_method(rb_cVector2, "reflect", rb_vector2_reflect_s, 2);
     rb_define_singleton_method(rb_cVector2, "clamp", rb_vector2_clamp_s, 3);
     rb_define_singleton_method(rb_cVector2, "lerp", rb_vector2_lerp_s, 3);
     rb_define_singleton_method(rb_cVector2, "transform", rb_vector2_transform_s, 2);
     rb_define_singleton_method(rb_cVector2, "transform_normal", rb_vector2_transform_normal_s, 2);
     rb_define_singleton_method(rb_cVector2, "min", rb_vector2_min_s, 2);
     rb_define_singleton_method(rb_cVector2, "max", rb_vector2_max_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "abs", rb_vector2_abs_s, 1);
-    // rb_define_singleton_method(rb_cVector2, "sqrt", rb_vector2_sqrt_s, 1);
-    // rb_define_singleton_method(rb_cVector2, "dot", rb_vector2_dot_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "add", rb_vector2_add_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "subtract", rb_vector2_subtract_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "multiply", rb_vector2_multiply_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "divide", rb_vector2_divide_s, 2);
-    // rb_define_singleton_method(rb_cVector2, "negate", rb_vector2_negate_s, 1);
-    
 }
 
 static VALUE rb_vector2_alloc(VALUE klass) {
