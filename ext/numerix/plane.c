@@ -27,7 +27,6 @@ void Init_plane(VALUE outer) {
 
     // Class
     rb_define_singleton_method(rb_cPlane, "from_vertices", rb_plane_from_vertices_s, 3);
-  
 }
 
 static VALUE rb_plane_alloc(VALUE klass) {
