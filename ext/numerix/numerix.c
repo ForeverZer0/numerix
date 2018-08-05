@@ -1,9 +1,11 @@
 #include "numerix.h"
 
 VALUE rb_mNumerix;
+VALUE rb_eNumerixError;
 
 void Init_numerix(void) {
     rb_mNumerix = rb_define_module("Numerix");
+    rb_eNumerixError = rb_define_class_under(rb_mNumerix, "NumerixError", rb_eStandardError);
 
     Init_numerix_structure(rb_mNumerix);
     Init_vector_base(rb_mNumerix);

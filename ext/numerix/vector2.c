@@ -22,13 +22,17 @@ void Init_vector2(VALUE outer) {
     rb_define_method(rb_cVector2, "lerp!", rb_vector2_lerp_bang, 2);
     rb_define_method(rb_cVector2, "transform", rb_vector2_transform, 1);
     rb_define_method(rb_cVector2, "transform!", rb_vector2_transform_bang, 1);
+    rb_define_method(rb_cVector2, "transform_normal", rb_vector2_transform_normal, 1);
+    rb_define_method(rb_cVector2, "transform_normal!", rb_vector2_transform_normal_bang, 1);
     rb_define_method(rb_cVector2, "abs", rb_vector2_abs, 0);
     rb_define_method(rb_cVector2, "sqrt", rb_vector2_sqrt, 0);
     rb_define_method(rb_cVector2, "dot", rb_vector2_dot, 1);
+    rb_define_method(rb_cVector2, "cross_product", rb_vector2_cross_product, 1);
     rb_define_method(rb_cVector2, "clamp", rb_vector2_clamp, 2);
     rb_define_method(rb_cVector2, "clamp!", rb_vector2_clamp_bang, 2);
     rb_define_method(rb_cVector2, "reflect", rb_vector2_reflect, 2);
     rb_define_method(rb_cVector2, "reflect!", rb_vector2_reflect_bang, 2);
+    rb_define_method(rb_cVector2, "angle", rb_vector2_angle, 1);
 
     // Conversion
     rb_define_method(rb_cVector2, "to_s", rb_vector2_to_s, 0);
@@ -57,8 +61,6 @@ void Init_vector2(VALUE outer) {
     rb_define_singleton_method(rb_cVector2, "create_norm", rb_vector2_create_norm, 2);
     rb_define_singleton_method(rb_cVector2, "clamp", rb_vector2_clamp_s, 3);
     rb_define_singleton_method(rb_cVector2, "lerp", rb_vector2_lerp_s, 3);
-    rb_define_singleton_method(rb_cVector2, "transform", rb_vector2_transform_s, 2);
-    rb_define_singleton_method(rb_cVector2, "transform_normal", rb_vector2_transform_normal_s, 2);
     rb_define_singleton_method(rb_cVector2, "min", rb_vector2_min_s, 2);
     rb_define_singleton_method(rb_cVector2, "max", rb_vector2_max_s, 2);
 }
@@ -262,7 +264,45 @@ VALUE rb_vector2_lerp(VALUE self, VALUE other, VALUE amount) {
 }
 
 VALUE rb_vector2_transform(VALUE self, VALUE other) {
-    return rb_vector2_transform_s(CLASS_OF(self), self, other);
+    VECTOR2();
+    Vector2 *result = ALLOC(Vector2);
+
+    if (NUMERIX_TYPE_P(other, rb_cMatrix3x2))
+    {
+        Matrix3x2 *m3;
+        Data_Get_Struct(other, Matrix3x2, m3);
+
+        result->x = v->x * m3->m11 + v->y * m3->m21 + m3->m31;
+        result->y = v->x * m3->m12 + v->y * m3->m22 + m3->m32;
+    }
+    else if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
+    {
+        Matrix4x4 *m4;
+        Data_Get_Struct(other, Matrix4x4, m4);
+
+        result->x = v->x * m4->m11 + v->y * m4->m21 + m4->m41;
+        result->y = v->x * m4->m12 + v->y * m4->m22 + m4->m42;
+    }
+    else
+    {
+        Quaternion *q;
+        Data_Get_Struct(other, Quaternion, q);
+
+        float x2 = q->x + q->x;
+        float y2 = q->y + q->y;
+        float z2 = q->z + q->z;
+
+        float wz2 = q->w * z2;
+        float xx2 = q->x * x2;
+        float xy2 = q->x * y2;
+        float yy2 = q->y * y2;
+        float zz2 = q->z * z2;
+ 
+        result->x = v->x * (1.0f - yy2 - zz2) + v->y * (xy2 - wz2);
+        result->y = v->x * (xy2 + wz2) + v->y * (1.0f - xx2 - zz2);
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector2_abs(VALUE self) {
@@ -359,11 +399,89 @@ VALUE rb_vector2_lerp_bang(VALUE self, VALUE other, VALUE amount) {
 }
 
 VALUE rb_vector2_transform_bang(VALUE self, VALUE other) {
-    struct RData *rdata = RDATA(self);
-    VALUE result = rb_vector2_transform_s(rdata->basic.klass, self, other);
-    Vector2 *src;
-    Data_Get_Struct(result, Vector2, src);
-    memcpy(rdata->data, src, sizeof(Vector2));
+    VECTOR2();
+
+    if (NUMERIX_TYPE_P(other, rb_cMatrix3x2))
+    {
+        Matrix3x2 *m3;
+        Data_Get_Struct(other, Matrix3x2, m3);
+
+        v->x = v->x * m3->m11 + v->y * m3->m21 + m3->m31;
+        v->y = v->x * m3->m12 + v->y * m3->m22 + m3->m32;
+    }
+    else if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
+    {
+        Matrix4x4 *m4;
+        Data_Get_Struct(other, Matrix4x4, m4);
+
+        v->x = v->x * m4->m11 + v->y * m4->m21 + m4->m41;
+        v->y = v->x * m4->m12 + v->y * m4->m22 + m4->m42;
+    }
+    else
+    {
+        Quaternion *q;
+        Data_Get_Struct(other, Quaternion, q);
+
+        float x2 = q->x + q->x;
+        float y2 = q->y + q->y;
+        float z2 = q->z + q->z;
+
+        float wz2 = q->w * z2;
+        float xx2 = q->x * x2;
+        float xy2 = q->x * y2;
+        float yy2 = q->y * y2;
+        float zz2 = q->z * z2;
+ 
+        v->x = v->x * (1.0f - yy2 - zz2) + v->y * (xy2 - wz2);
+        v->y = v->x * (xy2 + wz2) + v->y * (1.0f - xx2 - zz2);
+    }
+
+    return self;
+}
+
+VALUE rb_vector2_transform_normal(VALUE self, VALUE other) {
+    Vector2 *v, *result;
+    Data_Get_Struct(self, Vector2, v);
+    result = ALLOC(Vector2);
+    if (NUMERIX_TYPE_P(other, rb_cMatrix3x2))
+    {
+        Matrix3x2 *m3;
+        Data_Get_Struct(other, Matrix3x2, m3);
+
+        result->x = v->x * m3->m11 + v->y * m3->m21;
+        result->y = v->x * m3->m12 + v->y * m3->m22;
+    }
+    else
+    {
+        Matrix4x4 *m4;
+        Data_Get_Struct(other, Matrix4x4, m4);
+
+        result->x = v->x * m4->m11 + v->y * m4->m21;
+        result->y = v->x * m4->m12 + v->y * m4->m22;
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_vector2_transform_normal_bang(VALUE self, VALUE other) {
+    VECTOR2();
+    if (NUMERIX_TYPE_P(other, rb_cMatrix3x2))
+    {
+        Matrix3x2 *m3;
+        Data_Get_Struct(other, Matrix3x2, m3);
+
+        v->x = v->x * m3->m11 + v->y * m3->m21;
+        v->y = v->x * m3->m12 + v->y * m3->m22;
+    }
+    else
+    {
+        Matrix4x4 *m4;
+        Data_Get_Struct(other, Matrix4x4, m4);
+
+        v->x = v->x * m4->m11 + v->y * m4->m21;
+        v->y = v->x * m4->m12 + v->y * m4->m22;
+    }
+
     return self;
 }
 
@@ -409,6 +527,26 @@ VALUE rb_vector2_reflect_bang(VALUE self, VALUE other) {
     v1->y = v1->y - 2.0f * dot * v2->y;
 
     return self;
+}
+
+VALUE rb_vector2_angle(VALUE self, VALUE other) {
+    Vector2 *v1, *v2;
+    Data_Get_Struct(self, Vector2, v1);
+    Data_Get_Struct(other, Vector2, v2);
+
+    const float rad = 180.0f / NUMERIX_PI;
+    float s = v1->x * v2->y - v2->x * v1->y;  
+    float c = v1->x * v2->x + v1->y * v2->y;
+
+    return DBL2NUM(atan2f(s, c) * rad);
+}
+
+VALUE rb_vector2_cross_product(VALUE self, VALUE other) {
+    Vector2 *v1, *v2;
+    Data_Get_Struct(self, Vector2, v1);
+    Data_Get_Struct(other, Vector2, v2);
+
+    return DBL2NUM( v1->x * v2->y - v1->y * v2->x);
 }
 
 static inline VALUE rb_vector2_clamp_s(VALUE klass, VALUE vector, VALUE minimum, VALUE maximum) {
@@ -459,72 +597,6 @@ static inline VALUE rb_vector2_lerp_s(VALUE klass, VALUE vec1, VALUE vec2, VALUE
 
     result->x = v1->x + (v2->x - v1->x) * w;
     result->y = v1->y + (v2->y - v1->y) * w;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector2_transform_s(VALUE klass, VALUE vector, VALUE matrix) {
-    Vector2 *v, *result;
-    Data_Get_Struct(vector, Vector2, v);
-    result = ALLOC(Vector2);
-    if (NUMERIX_TYPE_P(matrix, rb_cMatrix3x2))
-    {
-        Matrix3x2 *m3;
-        Data_Get_Struct(matrix, Matrix3x2, m3);
-
-        result->x = v->x * m3->m11 + v->y * m3->m21 + m3->m31;
-        result->y = v->x * m3->m12 + v->y * m3->m22 + m3->m32;
-    }
-    else if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
-    {
-        Matrix4x4 *m4;
-        Data_Get_Struct(matrix, Matrix4x4, m4);
-
-        result->x = v->x * m4->m11 + v->y * m4->m21 + m4->m41;
-        result->y = v->x * m4->m12 + v->y * m4->m22 + m4->m42;
-    }
-    else
-    {
-        Quaternion *q;
-        Data_Get_Struct(matrix, Quaternion, q);
-
-        float x2 = q->x + q->x;
-        float y2 = q->y + q->y;
-        float z2 = q->z + q->z;
-
-        float wz2 = q->w * z2;
-        float xx2 = q->x * x2;
-        float xy2 = q->x * y2;
-        float yy2 = q->y * y2;
-        float zz2 = q->z * z2;
- 
-        result->x = v->x * (1.0f - yy2 - zz2) + v->y * (xy2 - wz2);
-        result->y = v->x * (xy2 + wz2) + v->y * (1.0f - xx2 - zz2);
-    }
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector2_transform_normal_s(VALUE klass, VALUE vector, VALUE matrix) {
-    Vector2 *v, *result;
-    Data_Get_Struct(vector, Vector2, v);
-    result = ALLOC(Vector2);
-    if (NUMERIX_TYPE_P(matrix, rb_cMatrix3x2))
-    {
-        Matrix3x2 *m3;
-        Data_Get_Struct(matrix, Matrix3x2, m3);
-
-        result->x = v->x * m3->m11 + v->y * m3->m21;
-        result->y = v->x * m3->m12 + v->y * m3->m22;
-    }
-    else
-    {
-        Matrix4x4 *m4;
-        Data_Get_Struct(matrix, Matrix4x4, m4);
-
-        result->x = v->x * m4->m11 + v->y * m4->m21;
-        result->y = v->x * m4->m12 + v->y * m4->m22;
-    }
 
     return NUMERIX_WRAP(klass, result);
 }

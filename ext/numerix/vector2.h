@@ -29,13 +29,17 @@ VALUE rb_vector2_lerp(VALUE self, VALUE other, VALUE amount);
 VALUE rb_vector2_lerp_bang(VALUE self, VALUE other, VALUE amount);
 VALUE rb_vector2_transform(VALUE self, VALUE other);
 VALUE rb_vector2_transform_bang(VALUE self, VALUE other);
+VALUE rb_vector2_transform_normal(VALUE self, VALUE other);
+VALUE rb_vector2_transform_normal_bang(VALUE self, VALUE other);
 VALUE rb_vector2_abs(VALUE self);
 VALUE rb_vector2_sqrt(VALUE self);
 VALUE rb_vector2_dot(VALUE self, VALUE other);
+VALUE rb_vector2_cross_product(VALUE self, VALUE other);
 VALUE rb_vector2_clamp(VALUE self, VALUE min, VALUE max);
 VALUE rb_vector2_clamp_bang(VALUE self, VALUE min, VALUE max);
 VALUE rb_vector2_reflect(VALUE self, VALUE other);
 VALUE rb_vector2_reflect_bang(VALUE self, VALUE other);
+VALUE rb_vector2_angle(VALUE self, VALUE other);
 
 // Conversion
 VALUE rb_vector2_to_s(VALUE self);
@@ -51,8 +55,6 @@ VALUE rb_vector2_unit_y(VALUE klass);
 VALUE rb_vector2_create_norm(VALUE klass, VALUE x, VALUE y);
 static inline VALUE rb_vector2_clamp_s(VALUE klass, VALUE vector, VALUE min, VALUE max);
 static inline VALUE rb_vector2_lerp_s(VALUE klass, VALUE vec1, VALUE vec2, VALUE amount);
-static inline VALUE rb_vector2_transform_s(VALUE klass, VALUE vector, VALUE matrix);
-static inline VALUE rb_vector2_transform_normal_s(VALUE klass, VALUE vector, VALUE matrix);
 static inline VALUE rb_vector2_min_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector2_max_s(VALUE klass, VALUE vec1, VALUE vec2);
 

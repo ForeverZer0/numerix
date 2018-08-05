@@ -38,6 +38,9 @@ VALUE rb_vector3_cross(VALUE self, VALUE other);
 VALUE rb_vector3_cross_bang(VALUE self, VALUE other);
 VALUE rb_vector3_reflect(VALUE self, VALUE other);
 VALUE rb_vector3_reflect_bang(VALUE self, VALUE other);
+VALUE rb_vector3_angle(VALUE self, VALUE other);
+VALUE rb_vector3_transform_normal(VALUE self, VALUE matrix);
+VALUE rb_vector3_transform_normal_bang(VALUE self, VALUE matrix);
 
 // Conversion
 VALUE rb_vector3_to_s(VALUE self);
@@ -56,8 +59,6 @@ VALUE rb_vector3_unit_z(VALUE klass);
 VALUE rb_vector3_create_norm(VALUE klass, VALUE x, VALUE y, VALUE z);
 static inline VALUE rb_vector3_clamp_s(VALUE klass, VALUE vector, VALUE minimum, VALUE maximum);
 static inline VALUE rb_vector3_lerp_s(VALUE klass, VALUE vec1, VALUE vec2, VALUE amount);
-static inline VALUE rb_vector3_transform_s(VALUE klass, VALUE vector, VALUE matrix);
-static inline VALUE rb_vector3_transform_normal_s(VALUE klass, VALUE vector, VALUE matrix);
 static inline VALUE rb_vector3_min_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector3_max_s(VALUE klass, VALUE vec1, VALUE vec2);
 

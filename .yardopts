@@ -2,4 +2,4 @@
 --title 'Numerix Documentation'
 --charset utf-8
 --markup markdown
-lib/numerix/stubs/*.rb
+lib/numerix/**/*.rb

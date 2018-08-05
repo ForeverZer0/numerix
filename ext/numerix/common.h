@@ -89,6 +89,7 @@ typedef struct BasicVector {
 } BasicVector;
 
 extern VALUE rb_mNumerix;
+extern VALUE rb_eNumerixError;
 extern VALUE rb_cNumerixStruct;
 extern VALUE rb_cVectorBase;
 extern VALUE rb_cMatrixBase;

@@ -3,11 +3,8 @@
 
 VALUE rb_cBasicVector;
 
-// to_a (aka elements)
 // to_s
-// size
-// count
-// address
+
 
 void Init_basic_vector(VALUE outer) {
     rb_cBasicVector = rb_define_class_under(outer, "BasicVector", rb_cObject);
@@ -22,6 +19,8 @@ void Init_basic_vector(VALUE outer) {
     rb_define_method(rb_cBasicVector, "length_squared", rb_basic_vector_length_squared, 0);
     rb_define_method(rb_cBasicVector, "normalize", rb_basic_vector_normalize, 0);
     rb_define_method(rb_cBasicVector, "normalize!", rb_basic_vector_normalize_bang, 0);
+    rb_define_method(rb_cBasicVector, "each", rb_basic_vector_each, 0);
+    rb_define_method(rb_cBasicVector, "dot", rb_basic_vector_dot, 1);
 
     // Operators
     rb_define_method(rb_cBasicVector, "+", rb_basic_vector_add, 1);
@@ -30,12 +29,17 @@ void Init_basic_vector(VALUE outer) {
     rb_define_method(rb_cBasicVector, "/", rb_basic_vector_divide, 1);
     rb_define_method(rb_cBasicVector, "-@", rb_basic_vector_negate, 0);
     rb_define_method(rb_cBasicVector, "==", rb_basic_vector_equal, 1);
+    rb_define_method(rb_cBasicVector, "[]", rb_basic_vector_aref, 1);
+    rb_define_method(rb_cBasicVector, "[]=", rb_basic_vector_aset, 2);
 
     // Alias
     rb_define_alias(rb_cBasicVector, "magnitude", "length");
 
     // Class
     rb_define_singleton_method(rb_cBasicVector, "[]", rb_basic_vector_create, -1);
+
+    // Include
+    rb_include_module(rb_cBasicVector, rb_mEnumerable);
 }
 
 VALUE rb_basic_vector_alloc(VALUE klass) {
@@ -52,7 +56,7 @@ VALUE rb_basic_vector_initialize(int argc, VALUE *argv, VALUE self) {
         int count = NUM2INT(argv[0]);
         if (count < 2)
         {
-            rb_raise(rb_eArgError, "vector size must be 2 or greater");
+            rb_raise(rb_eNumerixError, "vector size must be 2 or greater");
             return Qnil;
         }
         v->count = count;
@@ -72,14 +76,16 @@ VALUE rb_basic_vector_initialize(int argc, VALUE *argv, VALUE self) {
     return Qnil;
 }
 
-rb_basic_vector_create(int argc, VALUE *argv, VALUE klass) {
-    rb_scan_args(argc, argv, "2*");
+VALUE rb_basic_vector_create(int argc, VALUE *argv, VALUE klass) {
+    
+    if (argc < 2)
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 2 or more)", argc);
 
     BasicVector *v = ALLOC(BasicVector);
     v->count = argc;
     v->values = ruby_xmalloc(sizeof(float) * argc);
     for (int i = 0; i < argc; i++)
-        v->values[i] = NUM2FLT(argv[i]);
+        v->values[i] = NUM2FLT(argv[i]);rb_basic_vector_create;
 
     return NUMERIX_WRAP(klass, v);
 }
@@ -158,7 +164,7 @@ VALUE rb_basic_vector_multiply(VALUE self, VALUE other) {
         BasicVector *v2;
         Data_Get_Struct(other, BasicVector, v2);
         if (count != v2->count)
-            rb_raise(rb_eArgError, "unequal length vectors");
+            rb_raise(rb_eNumerixError, "unequal length vectors");
         for (int i = 0; i < count; i++)
             result->values[i] = v->values[i] * v2->values[i];
     }
@@ -180,7 +186,7 @@ VALUE rb_basic_vector_divide(VALUE self, VALUE other) {
         BasicVector *v2;
         Data_Get_Struct(other, BasicVector, v2);
         if (count != v2->count)
-            rb_raise(rb_eArgError, "unequal length vectors");
+            rb_raise(rb_eNumerixError, "unequal length vectors");
         for (int i = 0; i < count; i++)
             result->values[i] = v->values[i] / v2->values[i];
     }
@@ -245,4 +251,51 @@ VALUE rb_basic_vector_address(VALUE self) {
 VALUE rb_basic_vector_count(VALUE self) {
     BASIC_VECTOR();
     return INT2NUM(v->count);
+}
+
+VALUE rb_basic_vector_aref(VALUE self, VALUE index) {
+    BASIC_VECTOR();
+    int i = NUM2INT(index);
+
+    if (i < 0 || i >= v->count)
+        return Qnil;
+    return DBL2NUM(v->values[i]);
+}
+
+VALUE rb_basic_vector_aset(VALUE self, VALUE index, VALUE value) {
+    BASIC_VECTOR();
+    int i = NUM2INT(index);
+
+    if (i >= 0 && i < v->count)
+        v->values[i] = NUM2FLT(value);
+
+    return value;
+}
+
+VALUE rb_basic_vector_each(VALUE self) {
+    BASIC_VECTOR();
+    int count = v->count;
+
+    volatile VALUE vector = self;
+    RETURN_SIZED_ENUMERATOR(vector, 0, 0, count);
+
+    for (int i = 0; i < count; i++)
+        rb_yield(DBL2NUM(v->values[i]));
+
+    return vector;
+}
+
+VALUE rb_basic_vector_dot(VALUE self, VALUE other) {
+    BasicVector *v1, *v2;
+    Data_Get_Struct(self, BasicVector, v1);
+    Data_Get_Struct(self, BasicVector, v1);
+    int count = v1->count;
+    if (count != v2->count)
+        rb_raise(rb_eNumerixError, "unequal length vectors");
+
+    float dot = 0;
+    for (int i = 0; i < count; i++)
+        dot += v1->values[i] * v2->values[i];
+
+    return DBL2NUM(dot);
 }

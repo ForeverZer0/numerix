@@ -31,6 +31,9 @@ void Init_vector3(VALUE outer) {
     rb_define_method(rb_cVector3, "cross!", rb_vector3_cross_bang, 1);
     rb_define_method(rb_cVector3, "reflect", rb_vector3_reflect, 1);
     rb_define_method(rb_cVector3, "reflect!", rb_vector3_reflect_bang, 1);
+    rb_define_method(rb_cVector3, "angle", rb_vector3_angle, 1);
+    rb_define_method(rb_cVector3, "transform_normal", rb_vector3_transform_normal, 1);
+    rb_define_method(rb_cVector3, "transform_normal!", rb_vector3_transform_normal_bang, 1);
 
     // Conversion
     rb_define_method(rb_cVector3, "to_s", rb_vector3_to_s, 0);
@@ -62,7 +65,6 @@ void Init_vector3(VALUE outer) {
     rb_define_singleton_method(rb_cVector3, "create_norm", rb_vector3_create_norm, 3);
     rb_define_singleton_method(rb_cVector3, "clamp", rb_vector3_clamp_s, 3);
     rb_define_singleton_method(rb_cVector3, "lerp", rb_vector3_lerp_s, 3);
-    rb_define_singleton_method(rb_cVector3, "transform", rb_vector3_transform_s, 2);
     rb_define_singleton_method(rb_cVector3, "transform_normal", rb_vector3_transform_normal_s, 2);
     rb_define_singleton_method(rb_cVector3, "min", rb_vector3_min_s, 2);
     rb_define_singleton_method(rb_cVector3, "max", rb_vector3_max_s, 2);
@@ -368,7 +370,44 @@ VALUE rb_vector3_lerp(VALUE self, VALUE other, VALUE amount) {
 }
 
 VALUE rb_vector3_transform(VALUE self, VALUE other) {
-    return rb_vector3_transform_s(CLASS_OF(self), self, other);
+    Vector3 *v, *result;
+    Data_Get_Struct(self, Vector3, v);
+    result = ALLOC(Vector3);
+
+    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
+    {
+        Matrix4x4 *m;
+        Data_Get_Struct(other, Matrix4x4, m);
+
+        result->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + m->m41;
+        result->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + m->m42;
+        result->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + m->m43;
+    }
+    else
+    {
+        Quaternion *q;
+        Data_Get_Struct(other, Quaternion, q);
+
+        float x2 = q->x + q->x;
+        float y2 = q->y + q->y;
+        float z2 = q->z + q->z;
+
+        float wx2 = q->w * x2;
+        float wy2 = q->w * y2;
+        float wz2 = q->w * z2;
+        float xx2 = q->x * x2;
+        float xy2 = q->x * y2;
+        float xz2 = q->x * z2;
+        float yy2 = q->y * y2;
+        float yz2 = q->y * z2;
+        float zz2 = q->z * z2;
+
+        result->x = v->x * (1.0f - yy2 - zz2) + v->y * (xy2 - wz2) + v->z * (xz2 + wy2);
+        result->y = v->x * (xy2 + wz2) + v->y * (1.0f - xx2 - zz2) + v->z * (yz2 - wx2);
+        result->z = v->x * (xz2 - wy2) + v->y * (yz2 + wx2) + v->z * (1.0f - xx2 - yy2);
+    }
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_abs(VALUE self) {
@@ -429,11 +468,41 @@ VALUE rb_vector3_lerp_bang(VALUE self, VALUE other, VALUE amount) {
 }
 
 VALUE rb_vector3_transform_bang(VALUE self, VALUE other) {
-    struct RData *rdata = RDATA(self);
-    VALUE result = rb_vector3_transform_s(rdata->basic.klass, self, other);
-    Vector3 *src;
-    Data_Get_Struct(result, Vector3, src);
-    memcpy(rdata->data, src, sizeof(Vector3));
+    VECTOR3();
+
+    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
+    {
+        Matrix4x4 *m;
+        Data_Get_Struct(other, Matrix4x4, m);
+
+        v->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + m->m41;
+        v->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + m->m42;
+        v->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + m->m43;
+    }
+    else
+    {
+        Quaternion *q;
+        Data_Get_Struct(other, Quaternion, q);
+
+        float x2 = q->x + q->x;
+        float y2 = q->y + q->y;
+        float z2 = q->z + q->z;
+
+        float wx2 = q->w * x2;
+        float wy2 = q->w * y2;
+        float wz2 = q->w * z2;
+        float xx2 = q->x * x2;
+        float xy2 = q->x * y2;
+        float xz2 = q->x * z2;
+        float yy2 = q->y * y2;
+        float yz2 = q->y * z2;
+        float zz2 = q->z * z2;
+
+        v->x = v->x * (1.0f - yy2 - zz2) + v->y * (xy2 - wz2) + v->z * (xz2 + wy2);
+        v->y = v->x * (xy2 + wz2) + v->y * (1.0f - xx2 - zz2) + v->z * (yz2 - wx2);
+        v->z = v->x * (xz2 - wy2) + v->y * (yz2 + wx2) + v->z * (1.0f - xx2 - yy2);
+    }
+
     return self;
 }
 
@@ -508,6 +577,123 @@ VALUE rb_vector3_reflect_bang(VALUE self, VALUE other) {
     return self;
 }
 
+VALUE rb_vector3_angle(VALUE self, VALUE other) {
+
+    Vector3 *v1, *v2, *n1, *n2;
+    Data_Get_Struct(self, Vector3, v1);
+    Data_Get_Struct(other, Vector3, v2);
+    
+    n1 = ruby_xmalloc(sizeof(Vector3));
+    n2 = ruby_xmalloc(sizeof(Vector3));
+
+    // Create normalized copies of the given vectors
+    float inv = 1.0f / sqrtf(v1->x * v1->x + v1->y * v1->y + v1->z * v1->z);
+    n1->x = v1->x * inv;
+    n1->y = v1->y * inv;
+    n1->z = v1->z * inv;
+
+    inv = 1.0f / sqrtf(v2->x * v2->x + v2->y * v2->y + v2->z * v2->z);
+    n2->x = v2->x * inv;
+    n2->y = v2->y * inv;
+    n2->z = v2->z * inv;
+
+    float ratio = n1->x * n2->x + n1->y * n2->y + n1->z * n2->z;
+
+    // The "straight forward" method of acos(u.v) has large precision
+    // issues when the dot product is near +/-1.  This is due to the 
+    // steep slope of the acos function as we approach +/- 1.  Slight 
+    // precision errors in the dot product calculation cause large
+    // variation in the output value. 
+    //
+    //        |                   |
+    //         \__                |
+    //            ---___          | 
+    //                  ---___    |
+    //                        ---_|_ 
+    //                            | ---___ 
+    //                            |       ---___
+    //                            |             ---__ 
+    //                            |                  \
+    //                            |                   |
+    //       -|-------------------+-------------------|-
+    //       -1                   0                   1 
+    //
+    //                         acos(x) 
+    // 
+    // To avoid this we use an alternative method which finds the
+    // angle bisector by (u-v)/2: 
+    //
+    //                            _>
+    //                       u  _-  \ (u-v)/2
+    //                        _-  __-v 
+    //                      _=__--
+    //                    .=-----------> 
+    //                            v 
+    //
+    // Because u and v and unit vectors, (u-v)/2 forms a right angle 
+    // with the angle bisector.  The hypotenuse is 1, therefore
+    // 2*asin(|u-v|/2) gives us the angle between u and v.
+    //
+    // The largest possible value of |u-v| occurs with perpendicular 
+    // vectors and is sqrt(2)/2 which is well away from extreme slope
+    // at +/-1. 
+
+    float theta;
+    float length, x, y, z;
+    if (ratio < 0.0f)
+    { 
+        // Compute length of difference
+        x = -n1->x - n2->x;
+        y = -n1->y - n2->y;
+        z = -n1->z - n2->z;
+        length = sqrtf(x * x + y * y + z * z);
+
+        theta = NUMERIX_PI - 2.0f * asinf(length / 2.0f);
+    } 
+    else
+    {
+        // Compute length of difference
+        x = n1->x - n2->x;
+        y = n1->y - n2->y;
+        z = n1->z - n2->z;
+        length = sqrtf(x * x + y * y + z * z);
+
+        theta = 2.0f * asinf(length / 2.0f); 
+    }
+
+    ruby_xfree(n1);
+    ruby_xfree(n2);
+
+    // Convert radians to degrees and return
+    const float rad = 180.0f / NUMERIX_PI;
+    return DBL2NUM(theta * rad);
+}
+
+VALUE rb_vector3_transform_normal(VALUE self, VALUE matrix) {
+    VECTOR3();
+    Vector3 *result = ALLOC(Vector3);
+    Matrix4x4 *m4;
+    Data_Get_Struct(matrix, Matrix4x4, m4);
+
+    result->x = v->x * m4->m11 + v->y * m4->m21 + v->z * m4->m31;
+    result->y = v->x * m4->m12 + v->y * m4->m22 + v->z * m4->m32;
+    result->z = v->x * m4->m13 + v->y * m4->m23 + v->z * m4->m33;
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_vector3_transform_normal_bang(VALUE self, VALUE matrix) {
+    VECTOR3();
+    Matrix4x4 *m4;
+    Data_Get_Struct(matrix, Matrix4x4, m4);
+
+    v->x = v->x * m4->m11 + v->y * m4->m21 + v->z * m4->m31;
+    v->y = v->x * m4->m12 + v->y * m4->m22 + v->z * m4->m32;
+    v->z = v->x * m4->m13 + v->y * m4->m23 + v->z * m4->m33;
+
+    return self;
+}
+
 static inline VALUE rb_vector3_clamp_s(VALUE klass, VALUE vector, VALUE minimum, VALUE maximum) {
     Vector3 *v, *result;
     Data_Get_Struct(vector, Vector3, v);
@@ -563,60 +749,6 @@ static inline VALUE rb_vector3_lerp_s(VALUE klass, VALUE vec1, VALUE vec2, VALUE
     result->x = v1->x + (v2->x - v1->x) * w;
     result->y = v1->y + (v2->y - v1->y) * w;
     result->z = v1->z + (v2->z - v1->z) * w;
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_transform_s(VALUE klass, VALUE vector, VALUE matrix) {
-    Vector3 *v, *result;
-    Data_Get_Struct(vector, Vector3, v);
-    result = ALLOC(Vector3);
-    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
-    {
-        Matrix4x4 *m;
-        Data_Get_Struct(matrix, Matrix4x4, m);
-
-        result->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + m->m41;
-        result->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + m->m42;
-        result->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + m->m43;
-    }
-    else
-    {
-        Quaternion *q;
-        Data_Get_Struct(matrix, Quaternion, q);
-
-        float x2 = q->x + q->x;
-        float y2 = q->y + q->y;
-        float z2 = q->z + q->z;
-
-        float wx2 = q->w * x2;
-        float wy2 = q->w * y2;
-        float wz2 = q->w * z2;
-        float xx2 = q->x * x2;
-        float xy2 = q->x * y2;
-        float xz2 = q->x * z2;
-        float yy2 = q->y * y2;
-        float yz2 = q->y * z2;
-        float zz2 = q->z * z2;
-
-        result->x = v->x * (1.0f - yy2 - zz2) + v->y * (xy2 - wz2) + v->z * (xz2 + wy2);
-        result->y = v->x * (xy2 + wz2) + v->y * (1.0f - xx2 - zz2) + v->z * (yz2 - wx2);
-        result->z = v->x * (xz2 - wy2) + v->y * (yz2 + wx2) + v->z * (1.0f - xx2 - yy2);
-    }
-
-    return NUMERIX_WRAP(klass, result);
-}
-
-static inline VALUE rb_vector3_transform_normal_s(VALUE klass, VALUE vector, VALUE matrix) {
-    Vector3 *v, *result;
-    Data_Get_Struct(vector, Vector3, v);
-    result = ALLOC(Vector3);
-    Matrix4x4 *m4;
-    Data_Get_Struct(matrix, Matrix4x4, m4);
-
-    result->x = v->x * m4->m11 + v->y * m4->m21 + v->z * m4->m31;
-    result->y = v->x * m4->m12 + v->y * m4->m22 + v->z * m4->m32;
-    result->z = v->x * m4->m13 + v->y * m4->m23 + v->z * m4->m33;
 
     return NUMERIX_WRAP(klass, result);
 }
