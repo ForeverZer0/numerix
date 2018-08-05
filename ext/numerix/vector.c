@@ -1,13 +1,10 @@
 
-#include "basic_vector.h"
+#include "vector.h"
 
 VALUE rb_cBasicVector;
 
-// to_s
-
-
 void Init_basic_vector(VALUE outer) {
-    rb_cBasicVector = rb_define_class_under(outer, "BasicVector", rb_cObject);
+    rb_cBasicVector = rb_define_class_under(outer, "Vector", rb_cObject);
     rb_define_alloc_func(rb_cBasicVector, rb_basic_vector_alloc);
     rb_define_method(rb_cBasicVector, "initialize", rb_basic_vector_initialize, -1);
 
@@ -31,6 +28,9 @@ void Init_basic_vector(VALUE outer) {
     rb_define_method(rb_cBasicVector, "==", rb_basic_vector_equal, 1);
     rb_define_method(rb_cBasicVector, "[]", rb_basic_vector_aref, 1);
     rb_define_method(rb_cBasicVector, "[]=", rb_basic_vector_aset, 2);
+    rb_define_method(rb_cBasicVector, "**", rb_basic_vector_pow, 1);
+
+    rb_define_method(rb_cBasicVector, "to_s", rb_basic_vector_to_s, 0);
 
     // Alias
     rb_define_alias(rb_cBasicVector, "magnitude", "length");
@@ -118,7 +118,7 @@ VALUE rb_basic_vector_normalize(VALUE self) {
     for (int i = 0; i < c; i++)
         length += v->values[i] * v->values[i];
 
-    int inverse = sqrtf(length);
+    float inverse = 1.0f / sqrtf(length);
     for (int i = 0; i < c; i++)
         result->values[i] = v->values[i] * inverse;
 
@@ -133,7 +133,7 @@ VALUE rb_basic_vector_normalize_bang(VALUE self) {
     for (int i = 0; i < c; i++)
         length += v->values[i] * v->values[i];
 
-    int inverse = sqrtf(length);
+    float inverse = 1.0f / sqrtf(length);
     for (int i = 0; i < c; i++)
         v->values[i] *= inverse;
 
@@ -298,4 +298,41 @@ VALUE rb_basic_vector_dot(VALUE self, VALUE other) {
         dot += v1->values[i] * v2->values[i];
 
     return DBL2NUM(dot);
+}
+
+VALUE rb_basic_vector_to_s(VALUE self) {
+    VALUE ary = rb_funcall(self, rb_intern("to_a"), 0);
+    VALUE str = rb_ary_join(ary, rb_str_new_cstr(", "));
+    return rb_sprintf("<%"PRIsVALUE">", str);
+}
+
+VALUE rb_basic_vector_abs(VALUE self) {
+    BASIC_VECTOR_RESULT();
+
+    int count = v->count;
+    for (int i = 0; i < count; i++)
+        result->values[i] = fabsf(v->values[i]);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_basic_vector_sqrt(VALUE self) {
+    BASIC_VECTOR_RESULT();
+
+    int count = v->count;
+    for (int i = 0; i < count; i++)
+        result->values[i] = sqrtf(v->values[i]);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_basic_vector_pow(VALUE self, VALUE exponent) {
+    BASIC_VECTOR_RESULT();
+
+    float e = fabsf(NUM2FLT(exponent));
+    int count = v->count;
+    for (int i = 0; i < count; i++)
+        result->values[i] = powf(v->values[i], e);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }

@@ -31,6 +31,4 @@ VALUE rb_vector_base_map(VALUE self);
 VALUE rb_vector_base_map_bang(VALUE self);
 VALUE rb_vector_base_pow(VALUE self, VALUE exponent);
 
-static inline VALUE rb_vector_base_pow_s(VALUE klass, VALUE vector, VALUE exponent);
-
 #endif /* NUMERIX_VECTOR_BASE_H */

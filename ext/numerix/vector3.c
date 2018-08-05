@@ -1,7 +1,6 @@
 
 #include "vector3.h"
 
-
 void Init_vector3(VALUE outer) {
     
     rb_define_alloc_func(rb_cVector3, rb_vector3_alloc);
@@ -65,7 +64,6 @@ void Init_vector3(VALUE outer) {
     rb_define_singleton_method(rb_cVector3, "create_norm", rb_vector3_create_norm, 3);
     rb_define_singleton_method(rb_cVector3, "clamp", rb_vector3_clamp_s, 3);
     rb_define_singleton_method(rb_cVector3, "lerp", rb_vector3_lerp_s, 3);
-    rb_define_singleton_method(rb_cVector3, "transform_normal", rb_vector3_transform_normal_s, 2);
     rb_define_singleton_method(rb_cVector3, "min", rb_vector3_min_s, 2);
     rb_define_singleton_method(rb_cVector3, "max", rb_vector3_max_s, 2);
 }

@@ -1,7 +1,6 @@
 
 #include "vector4.h"
 
-
 void Init_vector4(VALUE outer) {
     
     rb_define_alloc_func(rb_cVector4, rb_vector4_alloc);

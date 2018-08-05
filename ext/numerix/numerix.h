@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "structure.h"
+#include "vector.h"
 #include "vector_base.h"
 #include "matrix_base.h"
 #include "vector2.h"

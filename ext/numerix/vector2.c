@@ -1,7 +1,6 @@
 
 #include "vector2.h"
 
-
 void Init_vector2(VALUE outer) {
     
     rb_define_alloc_func(rb_cVector2, rb_vector2_alloc);
@@ -555,8 +554,8 @@ static inline VALUE rb_vector2_clamp_s(VALUE klass, VALUE vector, VALUE minimum,
     result = ALLOC(Vector2);
     float x = v->x, y = v->y;
 
-    // This compare order is very important!!!
-    // We must follow HLSL behavior in the case user specified min value is bigger than max value.
+    // This compare order is very important!
+    // Required in the case user specified min value is bigger than max value.
     if (NUMERIX_TYPE_P(minimum, rb_cVector2) && NUMERIX_TYPE_P(maximum, rb_cVector2))
     {
         Vector2 *min, *max;
@@ -579,7 +578,6 @@ static inline VALUE rb_vector2_clamp_s(VALUE klass, VALUE vector, VALUE minimum,
 
         y = NUMERIX_MIN(y, maxf);
         y = NUMERIX_MAX(y, minf);
-
     }
 
     result->x = x;

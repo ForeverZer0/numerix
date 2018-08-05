@@ -46,6 +46,10 @@ VALUE rb_basic_vector_each(VALUE self);
 VALUE rb_basic_vector_aref(VALUE self, VALUE index);
 VALUE rb_basic_vector_aset(VALUE self, VALUE index, VALUE value);
 VALUE rb_basic_vector_dot(VALUE self, VALUE other);
+VALUE rb_basic_vector_to_s(VALUE self);
+VALUE rb_basic_vector_abs(VALUE self);
+VALUE rb_basic_vector_sqrt(VALUE self);
+VALUE rb_basic_vector_pow(VALUE self, VALUE exponent);
 
 // Class
 VALUE rb_basic_vector_create(int argc, VALUE *argv, VALUE klass);

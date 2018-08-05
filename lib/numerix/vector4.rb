@@ -256,32 +256,39 @@ module Numerix
     def clamp!(min, max)
     end
 
+    ##
     # @return [String] a String representation of this instance.
     def to_s
     end
 
+    ##
     # @return [Array<Float>] an Array representation of this instance.
     def to_a
     end
 
     alias_method :elements, :to_a
 
+    ##
     # @return [Hash{Symbol => Float}] a Hash representation of this instance.
     def to_h
     end
 
+    ##
     # @return [Quaternion] a {Quaternion} representation of this instance.
     def to_quaternion
     end
 
+    ##
     # @return [Plane] a {Plane} representation of this instance.
     def to_plane
     end
 
+    ##
     # @return [Vector2] a {Vector2} representation of this instance.
     def to_vec2
     end
 
+    ##
     # @return [Vector3] a {Vector3} representation of this instance.
     def to_vec3
     end
