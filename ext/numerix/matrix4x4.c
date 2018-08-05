@@ -17,8 +17,8 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "each_row", rb_matrix4x4_each_row, 0);
     rb_define_method(rb_cMatrix4x4, "each_column", rb_matrix4x4_each_column, 0);
     rb_define_method(rb_cMatrix4x4, "invert", rb_matrix4x4_invert, 0);
-    rb_define_method(rb_cMatrix4x4, "invert!", rb_matrix4x4_invert_bang, 0);
     rb_define_method(rb_cMatrix4x4, "transform", rb_matrix4x4_transform, 1);
+    rb_define_method(rb_cMatrix4x4, "transform!", rb_matrix4x4_transform_bang, 1);
     rb_define_method(rb_cMatrix4x4, "transpose", rb_matrix4x4_transpose, 0);
     rb_define_method(rb_cMatrix4x4, "lerp", rb_matrix4x4_lerp, 2);
     rb_define_method(rb_cMatrix4x4, "lerp!", rb_matrix4x4_lerp_bang, 2);
@@ -1409,6 +1409,65 @@ VALUE rb_matrix4x4_transform(VALUE self, VALUE quaternion) {
     return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
+VALUE rb_matrix4x4_transform_bang(VALUE self, VALUE quaternion) {
+    MATRIX4X4();
+    Quaternion *rotation;
+    Data_Get_Struct(quaternion, Quaternion, rotation);
+
+    // Compute rotation matrix.
+    float x2 = rotation->x + rotation->x;
+    float y2 = rotation->y + rotation->y;
+    float z2 = rotation->z + rotation->z;
+
+    float wx2 = rotation->w * x2;
+    float wy2 = rotation->w * y2;
+    float wz2 = rotation->w * z2;
+    float xx2 = rotation->x * x2;
+    float xy2 = rotation->x * y2;
+    float xz2 = rotation->x * z2;
+    float yy2 = rotation->y * y2;
+    float yz2 = rotation->y * z2;
+    float zz2 = rotation->z * z2;
+
+    float q11 = 1.0f - yy2 - zz2;
+    float q21 = xy2 - wz2;
+    float q31 = xz2 + wy2;
+
+    float q12 = xy2 + wz2;
+    float q22 = 1.0f - xx2 - zz2;
+    float q32 = yz2 - wx2;
+
+    float q13 = xz2 - wy2;
+    float q23 = yz2 + wx2;
+    float q33 = 1.0f - xx2 - yy2;
+
+    // First row
+    m->m11 = m->m11 * q11 + m->m12 * q21 + m->m13 * q31;
+    m->m12 = m->m11 * q12 + m->m12 * q22 + m->m13 * q32;
+    m->m13 = m->m11 * q13 + m->m12 * q23 + m->m13 * q33;
+    m->m14 = m->m14;
+
+    // Second row
+    m->m21 = m->m21 * q11 + m->m22 * q21 + m->m23 * q31;
+    m->m22 = m->m21 * q12 + m->m22 * q22 + m->m23 * q32;
+    m->m23 = m->m21 * q13 + m->m22 * q23 + m->m23 * q33;
+    m->m24 = m->m24;
+
+    // Third row
+    m->m31 = m->m31 * q11 + m->m32 * q21 + m->m33 * q31;
+    m->m32 = m->m31 * q12 + m->m32 * q22 + m->m33 * q32;
+    m->m33 = m->m31 * q13 + m->m32 * q23 + m->m33 * q33;
+    m->m34 = m->m34;
+
+    // Fourth row
+    m->m41 = m->m41 * q11 + m->m42 * q21 + m->m43 * q31;
+    m->m42 = m->m41 * q12 + m->m42 * q22 + m->m43 * q32;
+    m->m43 = m->m41 * q13 + m->m42 * q23 + m->m43 * q33;
+    m->m44 = m->m44;
+
+    return self;
+}
+
 VALUE rb_matrix4x4_transpose(VALUE self) {
     MATRIX4X4();
     Matrix4x4 *result = ALLOC(Matrix4x4);
@@ -1763,76 +1822,4 @@ VALUE rb_matrix4x4_invert(VALUE self) {
     }
 
     return NUMERIX_WRAP(CLASS_OF(self), result);
-}
-
-VALUE rb_matrix4x4_invert_bang(VALUE self) {
-    Matrix4x4 *mat;
-    Data_Get_Struct(self, Matrix4x4, mat);
-
-    float a = mat->m11, b = mat->m12, c = mat->m13, d = mat->m14;
-    float e = mat->m21, f = mat->m22, g = mat->m23, h = mat->m24;
-    float i = mat->m31, j = mat->m32, k = mat->m33, l = mat->m34;
-    float m = mat->m41, n = mat->m42, o = mat->m43, p = mat->m44;
-
-    float kp_lo = k * p - l * o;
-    float jp_ln = j * p - l * n;
-    float jo_kn = j * o - k * n;
-    float ip_lm = i * p - l * m;
-    float io_km = i * o - k * m;
-    float in_jm = i * n - j * m;
-
-    float a11 = +(f * kp_lo - g * jp_ln + h * jo_kn);
-    float a12 = -(e * kp_lo - g * ip_lm + h * io_km);
-    float a13 = +(e * jp_ln - f * ip_lm + h * in_jm);
-    float a14 = -(e * jo_kn - f * io_km + g * in_jm);
-
-    float det = a * a11 + b * a12 + c * a13 + d * a14;
-
-    if (fabsf(det) < FLT_EPSILON)
-    {
-        // invalid
-        float *matp = (float*) mat;
-        for (int i = 0; i < 16; i++)
-            matp[i] = NAN;
-    }
-    else
-    {
-        float invDet = 1.0f / det;
-
-        mat->m11 = a11 * invDet;
-        mat->m21 = a12 * invDet;
-        mat->m31 = a13 * invDet;
-        mat->m41 = a14 * invDet;
-
-        mat->m12 = -(b * kp_lo - c * jp_ln + d * jo_kn) * invDet;
-        mat->m22 = +(a * kp_lo - c * ip_lm + d * io_km) * invDet;
-        mat->m32 = -(a * jp_ln - b * ip_lm + d * in_jm) * invDet;
-        mat->m42 = +(a * jo_kn - b * io_km + c * in_jm) * invDet;
-
-        float gp_ho = g * p - h * o;
-        float fp_hn = f * p - h * n;
-        float fo_gn = f * o - g * n;
-        float ep_hm = e * p - h * m;
-        float eo_gm = e * o - g * m;
-        float en_fm = e * n - f * m;
-
-        mat->m13 = +(b * gp_ho - c * fp_hn + d * fo_gn) * invDet;
-        mat->m23 = -(a * gp_ho - c * ep_hm + d * eo_gm) * invDet;
-        mat->m33 = +(a * fp_hn - b * ep_hm + d * en_fm) * invDet;
-        mat->m43 = -(a * fo_gn - b * eo_gm + c * en_fm) * invDet;
-
-        float gl_hk = g * l - h * k;
-        float fl_hj = f * l - h * j;
-        float fk_gj = f * k - g * j;
-        float el_hi = e * l - h * i;
-        float ek_gi = e * k - g * i;
-        float ej_fi = e * j - f * i;
-
-        mat->m14 = -(b * gl_hk - c * fl_hj + d * fk_gj) * invDet;
-        mat->m24 = +(a * gl_hk - c * el_hi + d * ek_gi) * invDet;
-        mat->m34 = -(a * fl_hj - b * el_hi + d * ej_fi) * invDet;
-        mat->m44 = +(a * fk_gj - b * ek_gi + c * ej_fi) * invDet;
-    }
-
-    return self;
 }

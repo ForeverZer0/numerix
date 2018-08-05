@@ -1,11 +1,9 @@
 
 module Numerix
 
-  class BasicVector 
-
+  class Vector 
 =begin
-
+ 
 =end
-     
   end
 end
