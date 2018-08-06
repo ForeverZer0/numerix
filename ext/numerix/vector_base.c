@@ -14,6 +14,8 @@ void Init_vector_base(VALUE outer) {
     rb_cVector4 = rb_define_class_under(outer, "Vector4", rb_cVectorBase);
     rb_cQuaternion = rb_define_class_under(outer, "Quaternion", rb_cNumerixStruct);
 
+    rb_define_method(rb_cVectorBase, "initialize", rb_numerix_abstract_initialize, 0);
+
     rb_define_method(rb_cVector2, "x", rb_vector_base_x, 0);
     rb_define_method(rb_cVector2, "y", rb_vector_base_y, 0);
     rb_define_method(rb_cVector2, "x=", rb_vector_base_x_set, 1);
@@ -42,61 +44,9 @@ void Init_vector_base(VALUE outer) {
     rb_define_method(rb_cQuaternion, "x=", rb_vector_base_x_set, 1);
     rb_define_method(rb_cQuaternion, "y=", rb_vector_base_y_set, 1);
     rb_define_method(rb_cQuaternion, "z=", rb_vector_base_z_set, 1);
-    rb_define_method(rb_cQuaternion, "w=", rb_vector_base_w_set, 1);  
-
-    rb_define_method(rb_cVectorBase, "map2", rb_vector_base_map, 0);
-    rb_define_method(rb_cVectorBase, "map2!", rb_vector_base_map_bang, 0);
-    rb_define_alias(rb_cVectorBase, "collect2", "map2");
-    rb_define_alias(rb_cVectorBase, "collect2!", "map2!");
-    
-    rb_define_method(rb_cVectorBase, "**", rb_vector_base_pow, 1);
-
+    rb_define_method(rb_cQuaternion, "w=", rb_vector_base_w_set, 1);
 
     rb_include_module(rb_cVectorBase, rb_mEnumerable);
-}
-
-VALUE rb_vector_base_map(VALUE self) {
-    struct RData *rdata = RDATA(self);
-    int size = 0;
-
-    if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cVector2))
-        size = sizeof(float) * 2;
-    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cVector3))
-        size = sizeof(float) * 3;
-    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cVector4))
-        size = sizeof(float) * 4;
-
-    float *flt = (float*) rdata->data;
-    float *result = (float*) ruby_xmalloc(size);
-
-    int count = size / sizeof(float);
-    for (int i = 0; i < count; i++)
-    {
-        result[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
-    }
-    
-    return NUMERIX_WRAP(rdata->basic.klass, result);
-}
-
-VALUE rb_vector_base_map_bang(VALUE self) {
-    struct RData *rdata = RDATA(self);
-
-    int count = 0;
-    if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cVector2))
-        count = 2;
-    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cVector3))
-        count = 3;
-    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cVector4))
-        count = 4;
-
-    float *flt = (float*) rdata->data;
-
-    for (int i = 0; i < count; i++)
-    {
-        flt[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
-    }
-
-    return self;
 }
 
 VALUE rb_vector_base_x(VALUE self) {
@@ -141,25 +91,4 @@ VALUE rb_vector_base_w_set(VALUE self, VALUE value) {
     VECTOR4();
     v->w = NUM2FLT(value);
     return value;
-}
-
-VALUE rb_vector_base_pow(VALUE self, VALUE exponent) {
-    int count = 0;
-    VALUE klass = CLASS_OF(self);
-
-    if (NUMERIX_INHERIT_P(klass, rb_cVector2))
-        count = 2;
-    else if (NUMERIX_INHERIT_P(klass, rb_cVector3))
-        count = 3;
-    else if (NUMERIX_INHERIT_P(klass, rb_cVector4))
-        count = 4;
-    
-    float *v = RDATA(self)->data;
-    float *result = ruby_xmalloc(count * sizeof(float));
-    float e = fabsf(NUM2FLT(exponent));
-
-    for (int i = 0; i < count; i++)
-        result[i] = powf(fabsf(v[i]), e);
-
-    return NUMERIX_WRAP(CLASS_OF(self), result);
 }

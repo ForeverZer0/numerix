@@ -17,7 +17,13 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_method(rb_cMatrix3x2, "invert", rb_matrix3x2_invert, 0);
     rb_define_method(rb_cMatrix3x2, "lerp", rb_matrix3x2_lerp, 2);
     rb_define_method(rb_cMatrix3x2, "lerp!", rb_matrix3x2_lerp_bang, 2);
-    
+    rb_define_method(rb_cMatrix3x2, "map", rb_matrix3x2_map, 0);
+    rb_define_method(rb_cMatrix3x2, "map!", rb_matrix3x2_map_bang, 0);
+
+    // Alias
+    rb_define_alias(rb_cMatrix3x2, "collect", "map");
+    rb_define_alias(rb_cMatrix3x2, "collect!", "map!");
+
     // Conversion
     rb_define_method(rb_cMatrix3x2, "to_s", rb_matrix3x2_to_s, 0);
     rb_define_method(rb_cMatrix3x2, "to_a", rb_matrix3x2_to_a, 0);
@@ -31,6 +37,7 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_method(rb_cMatrix3x2, "==", rb_matrix3x2_equal, 1);
     rb_define_method(rb_cMatrix3x2, "[]", rb_matrix3x2_aref, -1);
     rb_define_method(rb_cMatrix3x2, "[]=", rb_matrix3x2_aset, -1);
+    rb_define_method(rb_cMatrix3x2, "**", rb_matrix3x2_pow, 1);
 
     // Class
     rb_define_singleton_method(rb_cMatrix3x2, "identity", rb_matrix3x2_identity, 0);
@@ -39,7 +46,6 @@ void Init_matrix3x2(VALUE outer) {
     rb_define_singleton_method(rb_cMatrix3x2, "create_skew", rb_matrix3x2_create_skew, -1);
     rb_define_singleton_method(rb_cMatrix3x2, "create_rotation", rb_matrix3x2_create_rotation, -1);
     rb_define_singleton_method(rb_cMatrix3x2, "lerp", rb_matrix3x2_lerp_s, 3);
-
 }
 
 static VALUE rb_matrix3x2_allocate(VALUE klass) {
@@ -50,26 +56,26 @@ static VALUE rb_matrix3x2_allocate(VALUE klass) {
 
 VALUE rb_matrix3x2_initialize(int argc, VALUE *argv, VALUE self) {
     MATRIX3X2();
-    if (argc == 6)
-    {
+    if (argc == 6) {
         m->m11 = NUM2FLT(argv[0]);
         m->m12 = NUM2FLT(argv[1]);
         m->m21 = NUM2FLT(argv[2]);
         m->m22 = NUM2FLT(argv[3]);
         m->m31 = NUM2FLT(argv[4]);
         m->m32 = NUM2FLT(argv[5]);
-    }
-    else if (argc != 0)
+    } else if (argc != 0)
         rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 6)", argc);
-    
+
     return Qnil;
 }
 
 VALUE rb_matrix3x2_identity_p(VALUE self) {
     MATRIX3X2();
     // Check diagonal element first for early out.
-    return m->m11 == 1.0f && m->m22 == 1.0f && m->m12 == 0.0f && 
-           m->m21 == 0.0f && m->m31 == 0.0f && m->m32 == 0.0f ? Qtrue : Qfalse;
+    return m->m11 == 1.0f && m->m22 == 1.0f && m->m12 == 0.0f &&
+                   m->m21 == 0.0f && m->m31 == 0.0f && m->m32 == 0.0f
+               ? Qtrue
+               : Qfalse;
 }
 
 VALUE rb_matrix3x2_identity(VALUE klass) {
@@ -103,20 +109,16 @@ VALUE rb_matrix3x2_translation_set(VALUE self, VALUE value) {
 VALUE rb_matrix3x2_create_translation(int argc, VALUE *argv, VALUE klass) {
     Matrix3x2 *result = ALLOC(Matrix3x2);
 
-    if (argc == 1)
-    {
+    if (argc == 1) {
         Vector2 *v;
         Data_Get_Struct(argv[0], Vector2, v);
         result->m31 = v->x;
         result->m32 = v->y;
 
-    }
-    else if (argc == 2)
-    {
+    } else if (argc == 2) {
         result->m31 = NUM2FLT(argv[0]);
         result->m32 = NUM2FLT(argv[1]);
-    }
-    else
+    } else
         rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
 
     result->m11 = 1.0f;
@@ -178,8 +180,7 @@ VALUE rb_matrix3x2_multiply(VALUE self, VALUE other) {
     Data_Get_Struct(self, Matrix3x2, m1);
     result = ALLOC(Matrix3x2);
     VALUE klass = CLASS_OF(self);
-    if (NUMERIX_TYPE_P(other, klass))
-    {
+    if (NUMERIX_TYPE_P(other, klass)) {
         Matrix3x2 *m2, *result;
         Data_Get_Struct(other, Matrix3x2, m2);
 
@@ -194,9 +195,7 @@ VALUE rb_matrix3x2_multiply(VALUE self, VALUE other) {
         // Third row
         result->m31 = m1->m31 * m2->m11 + m1->m32 * m2->m21 + m2->m31;
         result->m32 = m1->m31 * m2->m12 + m1->m32 * m2->m22 + m2->m32;
-    }
-    else
-    {
+    } else {
         float scalar = NUM2FLT(other);
         result->m11 = m1->m11 * scalar;
         result->m12 = m1->m12 * scalar;
@@ -209,6 +208,18 @@ VALUE rb_matrix3x2_multiply(VALUE self, VALUE other) {
     return NUMERIX_WRAP(klass, result);
 }
 
+VALUE rb_matrix3x2_pow(VALUE self, VALUE exponent) {
+    struct RData *rdata = RDATA(self);
+    const int count = 6;
+    float *result = ruby_xmalloc(sizeof(float) * count);
+    float *m = (float *)rdata->data;
+    float e = fabsf(NUM2FLT(exponent));
+    for (int i = 0; i < count; i++)
+        result[i] = powf(fabsf(m[i]), e);
+
+    return NUMERIX_WRAP(rdata->basic.klass, result);
+}
+
 VALUE rb_matrix3x2_equal(VALUE self, VALUE other) {
     if (CLASS_OF(other) != CLASS_OF(self))
         return Qfalse;
@@ -216,30 +227,28 @@ VALUE rb_matrix3x2_equal(VALUE self, VALUE other) {
     Data_Get_Struct(self, Matrix3x2, m1);
     Data_Get_Struct(other, Matrix3x2, m2);
     return FLT_EQUAL(m1->m11, m2->m11) && FLT_EQUAL(m1->m12, m2->m12) &&
-           FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) &&
-           FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) ? Qtrue : Qfalse;
+                   FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) &&
+                   FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32)
+               ? Qtrue
+               : Qfalse;
 }
 
 VALUE rb_matrix3x2_row(VALUE self, VALUE row) {
     MATRIX3X2();
     VALUE args = rb_ary_new_capa(4);
     int r = NUM2INT(row);
-    switch (r)
-    {
-        case 0:
-        {
+    switch (r) {
+        case 0: {
             rb_ary_push(args, DBL2NUM(m->m11));
             rb_ary_push(args, DBL2NUM(m->m12));
             break;
         }
-        case 1:
-        {
+        case 1: {
             rb_ary_push(args, DBL2NUM(m->m21));
             rb_ary_push(args, DBL2NUM(m->m22));
             break;
         }
-        case 2:
-        {
+        case 2: {
             rb_ary_push(args, DBL2NUM(m->m31));
             rb_ary_push(args, DBL2NUM(m->m32));
             break;
@@ -254,19 +263,41 @@ VALUE rb_matrix3x2_column(VALUE self, VALUE column) {
     MATRIX3X2();
     VALUE args = rb_ary_new_capa(3);
     int c = NUM2INT(column);
-    if (c == 0)
-    {
+    if (c == 0) {
         rb_ary_push(args, DBL2NUM(m->m11));
         rb_ary_push(args, DBL2NUM(m->m21));
         rb_ary_push(args, DBL2NUM(m->m31));
-    }
-    else if (c == 1)
-    {
+    } else if (c == 1) {
         rb_ary_push(args, DBL2NUM(m->m12));
         rb_ary_push(args, DBL2NUM(m->m22));
         rb_ary_push(args, DBL2NUM(m->m32));
     }
-    return args; 
+    return args;
+}
+
+VALUE rb_matrix3x2_map(VALUE self) {
+    const int count = 6;
+    RETURN_SIZED_ENUMERATOR(self, 0, 0, count);
+
+    struct RData *rdata = RDATA(self);
+    float *flt = (float *)rdata->data;
+    float *result = (float *)ruby_xmalloc(count * sizeof(float));
+
+    for (int i = 0; i < count; i++)
+        result[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
+
+    return NUMERIX_WRAP(rdata->basic.klass, result);
+}
+
+VALUE rb_matrix3x2_map_bang(VALUE self) {
+    const int count = 6;
+    RETURN_SIZED_ENUMERATOR(self, 0, 0, count);
+
+    float *flt = (float *)RDATA(self)->data;
+    for (int i = 0; i < count; i++)
+        flt[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
+
+    return self;
 }
 
 VALUE rb_matrix3x2_to_s(VALUE self) {
@@ -311,30 +342,23 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
     Matrix3x2 *result = ALLOC(Matrix3x2);
     result->m12 = 0.0f;
     result->m21 = 0.0f;
-    switch (argc)
-    {
-        case 1:
-        {
+    switch (argc) {
+        case 1: {
             result->m31 = 0.0f;
             result->m32 = 0.0f;
-            if (NUMERIX_TYPE_P(argv[0], rb_cVector2))
-            {
+            if (NUMERIX_TYPE_P(argv[0], rb_cVector2)) {
                 Vector2 *vscale;
                 Data_Get_Struct(argv[0], Vector2, vscale);
                 result->m11 = vscale->x;
                 result->m22 = vscale->y;
-            }
-            else
-            {
+            } else {
                 float scale = NUM2FLT(argv[0]);
                 result->m11 = scale;
                 result->m22 = scale;
             }
         }
-        case 2:
-        {
-            if (NUMERIX_TYPE_P(argv[0], rb_cVector2))
-            {
+        case 2: {
+            if (NUMERIX_TYPE_P(argv[0], rb_cVector2)) {
                 Vector2 *v1, *v2;
                 Data_Get_Struct(argv[0], Vector2, v1);
                 Data_Get_Struct(argv[1], Vector2, v2);
@@ -342,11 +366,8 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
                 result->m22 = v1->y;
                 result->m31 = v2->x * (1.0f - v1->x);
                 result->m32 = v2->y * (1.0f - v1->y);
-            }
-            else
-            {
-                if (NUMERIX_TYPE_P(argv[1], rb_cVector2))
-                {
+            } else {
+                if (NUMERIX_TYPE_P(argv[1], rb_cVector2)) {
                     float s = NUM2FLT(argv[0]);
                     Vector2 *cp;
                     Data_Get_Struct(argv[1], Vector2, cp);
@@ -354,9 +375,7 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
                     result->m22 = s;
                     result->m31 = cp->x * (1.0f - s);
                     result->m32 = cp->y * (1.0f - s);
-                }
-                else
-                {
+                } else {
                     result->m11 = NUM2FLT(argv[0]);
                     result->m22 = NUM2FLT(argv[1]);
                     result->m31 = 0.0f;
@@ -365,8 +384,7 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
             }
             break;
         }
-        case 3:
-        {
+        case 3: {
             Vector2 *vec2;
             Data_Get_Struct(argv[2], Vector2, vec2);
             float xscale = NUM2FLT(argv[0]);
@@ -376,7 +394,6 @@ VALUE rb_matrix3x2_create_scale(int argc, VALUE *argv, VALUE klass) {
             result->m22 = yscale;
             result->m31 = vec2->x * (1.0f - xscale);
             result->m32 = vec2->y * (1.0f - yscale);
-
         }
         default:
             rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2, 3)", argc);
@@ -399,57 +416,45 @@ VALUE rb_matrix3x2_create_skew(int argc, VALUE *argv, VALUE klass) {
     result->m11 = 1.0f;
     result->m22 = 1.0f;
 
-    if (argc == 3)
-    {
+    if (argc == 3) {
         Vector2 *cp;
         Data_Get_Struct(argv[2], Vector2, cp);
         result->m31 = -cp->x * xTan;
         result->m32 = -cp->y * yTan;
-    }
-    else
-    {
+    } else {
         result->m31 = 0.0f;
         result->m32 = 0.0f;
     }
-        
-    return NUMERIX_WRAP(klass, result);    
+
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix3x2_create_rotation(int argc, VALUE *argv, VALUE klass) {
     if (argc != 1 && argc != 2)
-        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc); 
+        rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2)", argc);
 
     Matrix3x2 *result = ALLOC(Matrix3x2);
     float radians = remainderf(NUM2FLT(argv[0]), NUMERIX_PI * 2.0f);
     const float epsilon = 0.001f * NUMERIX_PI / 180.0f;  // 0.1% of a degree
     float c, s;
-    
-    if (radians > -epsilon && radians < epsilon)
-    {
+
+    if (radians > -epsilon && radians < epsilon) {
         // Exact case for zero rotation.
         c = 1;
         s = 0;
-    }
-    else if (radians > NUMERIX_HALF_PI - epsilon && radians < NUMERIX_HALF_PI + epsilon)
-    {
+    } else if (radians > NUMERIX_HALF_PI - epsilon && radians < NUMERIX_HALF_PI + epsilon) {
         // Exact case for 90 degree rotation.
         c = 0;
         s = 1;
-    }
-    else if (radians < -NUMERIX_PI + epsilon || radians > NUMERIX_PI - epsilon)
-    {
+    } else if (radians < -NUMERIX_PI + epsilon || radians > NUMERIX_PI - epsilon) {
         // Exact case for 180 degree rotation.
         c = -1;
         s = 0;
-    }
-    else if (radians > -NUMERIX_HALF_PI - epsilon && radians < -NUMERIX_HALF_PI + epsilon)
-    {
+    } else if (radians > -NUMERIX_HALF_PI - epsilon && radians < -NUMERIX_HALF_PI + epsilon) {
         // Exact case for 270 degree rotation.
         c = 0;
         s = -1;
-    }
-    else
-    {
+    } else {
         // Arbitrary rotation.
         c = cosf(radians);
         s = sinf(radians);
@@ -462,20 +467,17 @@ VALUE rb_matrix3x2_create_rotation(int argc, VALUE *argv, VALUE klass) {
     result->m12 = s;
     result->m21 = -s;
     result->m22 = c;
-    if (argc == 2)
-    {
+    if (argc == 2) {
         Vector2 *cp;
         Data_Get_Struct(argv[1], Vector2, cp);
         result->m31 = cp->x * (1.0f - c) + cp->y * s;
         result->m32 = cp->y * (1.0f - c) - cp->x * s;
-    }
-    else
-    {
+    } else {
         result->m31 = 0.0f;
         result->m32 = 0.0f;
     }
 
-    return NUMERIX_WRAP(klass, result); 
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix3x2_determinant(VALUE self) {
@@ -500,8 +502,7 @@ VALUE rb_matrix3x2_determinant(VALUE self) {
 
 VALUE rb_matrix3x2_each_row(VALUE self) {
     MATRIX3X2();
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         VALUE index = INT2NUM(i);
         rb_yield(rb_matrix3x2_row(self, index));
     }
@@ -510,8 +511,7 @@ VALUE rb_matrix3x2_each_row(VALUE self) {
 
 VALUE rb_matrix3x2_each_column(VALUE self) {
     MATRIX3X2();
-    for (int i = 0; i < 2; i++)
-    {
+    for (int i = 0; i < 2; i++) {
         VALUE index = INT2NUM(i);
         rb_yield(rb_matrix3x2_column(self, index));
     }
@@ -519,12 +519,9 @@ VALUE rb_matrix3x2_each_column(VALUE self) {
 }
 
 VALUE rb_matrix3x2_aref(int argc, VALUE *argv, VALUE self) {
-    if (argc == 1)
-    {
+    if (argc == 1) {
         return rb_call_super(1, argv);
-    }
-    else if (argc == 2)
-    {
+    } else if (argc == 2) {
         int r = NUM2INT(argv[0]);
         int c = NUM2INT(argv[1]);
         if (r < 0 || r > 2 || c < 0 || c > 1)
@@ -537,12 +534,9 @@ VALUE rb_matrix3x2_aref(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self) {
-    if (argc == 2)
-    {
-        return rb_call_super(2, argv); 
-    }
-    else if (argc == 3)
-    {
+    if (argc == 2) {
+        return rb_call_super(2, argv);
+    } else if (argc == 3) {
         int r = NUM2INT(argv[0]);
         int c = NUM2INT(argv[1]);
         if (r < 0 || r > 2 || c < 0 || c > 1)
@@ -551,7 +545,7 @@ VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self) {
         return rb_call_super(2, &argv[1]);
     }
     rb_raise(rb_eArgError, "wrong number of arguments (%d for 2, 3)", argc);
-    return Qnil; 
+    return Qnil;
 }
 
 VALUE rb_matrix3x2_invert(VALUE self) {
@@ -561,14 +555,11 @@ VALUE rb_matrix3x2_invert(VALUE self) {
 
     float det = (m->m11 * m->m22) - (m->m21 * m->m12);
 
-    if (fabsf(det) < FLT_EPSILON)
-    {
-        float *ptr = (float*) result;
-        for (int i = 0; i < 6; i ++)
+    if (fabsf(det) < FLT_EPSILON) {
+        float *ptr = (float *)result;
+        for (int i = 0; i < 6; i++)
             ptr[i] = NAN;
-    }
-    else
-    {
+    } else {
         float invDet = 1.0f / det;
         result->m11 = m->m22 * invDet;
         result->m12 = -m->m12 * invDet;

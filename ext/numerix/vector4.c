@@ -2,7 +2,6 @@
 #include "vector4.h"
 
 void Init_vector4(VALUE outer) {
-    
     rb_define_alloc_func(rb_cVector4, rb_vector4_alloc);
 
     // Instance Methods
@@ -26,6 +25,8 @@ void Init_vector4(VALUE outer) {
     rb_define_method(rb_cVector4, "dot", rb_vector4_dot, 1);
     rb_define_method(rb_cVector4, "clamp", rb_vector4_clamp, 2);
     rb_define_method(rb_cVector4, "clamp!", rb_vector4_clamp_bang, 2);
+    rb_define_method(rb_cVector4, "map", rb_vector4_map, 0);
+    rb_define_method(rb_cVector4, "map!", rb_vector4_map_bang, 0);
 
     // Conversion
     rb_define_method(rb_cVector4, "to_s", rb_vector4_to_s, 0);
@@ -43,10 +44,13 @@ void Init_vector4(VALUE outer) {
     rb_define_method(rb_cVector4, "/", rb_vector4_divide, 1);
     rb_define_method(rb_cVector4, "==", rb_vector4_equal, 1);
     rb_define_method(rb_cVector4, "-@", rb_vector4_negate, 0);
+    rb_define_method(rb_cVector4, "**", rb_vector4_pow, 1);
 
     // Alias
     rb_define_alias(rb_cVector4, "magnitude", "length");
     rb_define_alias(rb_cVector4, "elements", "to_a");
+    rb_define_alias(rb_cVector4, "collect", "map");
+    rb_define_alias(rb_cVector4, "collect!", "map!");
 
     // Singleton Methods
     rb_define_singleton_method(rb_cVector4, "zero", rb_vector4_alloc, 0);
@@ -71,12 +75,10 @@ static VALUE rb_vector4_alloc(VALUE klass) {
 
 VALUE rb_vector4_initialize(int argc, VALUE *argv, VALUE self) {
     VECTOR4();
-    switch (argc)
-    {
+    switch (argc) {
         case 0:
             break;
-        case 1:
-        {
+        case 1: {
             float value = NUM2FLT(argv[0]);
             v->x = value;
             v->y = value;
@@ -84,19 +86,15 @@ VALUE rb_vector4_initialize(int argc, VALUE *argv, VALUE self) {
             v->w = value;
             break;
         }
-        case 2:
-        {
-            if (NUMERIX_TYPE_P(argv[0], rb_cVector3))
-            {
+        case 2: {
+            if (NUMERIX_TYPE_P(argv[0], rb_cVector3)) {
                 Vector3 *vec3;
                 Data_Get_Struct(argv[0], Vector3, vec3);
                 v->x = vec3->x;
                 v->y = vec3->y;
                 v->z = vec3->z;
                 v->w = NUM2FLT(argv[1]);
-            }
-            else
-            {
+            } else {
                 Vector2 *v1, *v2;
                 Data_Get_Struct(argv[0], Vector2, v1);
                 Data_Get_Struct(argv[1], Vector2, v2);
@@ -107,8 +105,7 @@ VALUE rb_vector4_initialize(int argc, VALUE *argv, VALUE self) {
             }
             break;
         }
-        case 3:
-        {
+        case 3: {
             Vector2 *vec2;
             Data_Get_Struct(argv[0], Vector2, vec2);
             v->x = vec2->x;
@@ -117,8 +114,7 @@ VALUE rb_vector4_initialize(int argc, VALUE *argv, VALUE self) {
             v->w = NUM2FLT(argv[2]);
             break;
         }
-        case 4:
-        {
+        case 4: {
             v->x = NUM2FLT(argv[0]);
             v->y = NUM2FLT(argv[1]);
             v->z = NUM2FLT(argv[2]);
@@ -128,7 +124,6 @@ VALUE rb_vector4_initialize(int argc, VALUE *argv, VALUE self) {
         default:
             rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 1, 2, 3, 4)", argc);
             break;
-
     }
     return Qnil;
 }
@@ -185,7 +180,7 @@ VALUE rb_vector4_length(VALUE self) {
 
 VALUE rb_vector4_length_squared(VALUE self) {
     VECTOR4();
-    return DBL2NUM(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w); 
+    return DBL2NUM(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
 }
 
 VALUE rb_vector4_one_p(VALUE self) {
@@ -230,17 +225,14 @@ VALUE rb_vector4_multiply(VALUE self, VALUE other) {
     VECTOR4();
     Vector4 *result = ALLOC(Vector4);
 
-    if (NUMERIX_TYPE_P(other, rb_cVector4))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cVector4)) {
         Vector4 *v2;
         Data_Get_Struct(other, Vector4, v2);
         result->x = v->x * v2->x;
         result->y = v->x * v2->y;
         result->z = v->z * v2->z;
         result->w = v->w * v2->w;
-    }
-    else
-    {
+    } else {
         float scalar = NUM2FLT(other);
         result->x = v->x * scalar;
         result->y = v->y * scalar;
@@ -255,17 +247,14 @@ VALUE rb_vector4_divide(VALUE self, VALUE other) {
     VECTOR4();
     Vector4 *result = ALLOC(Vector4);
 
-    if (NUMERIX_TYPE_P(other, rb_cVector4))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cVector4)) {
         Vector4 *v2;
         Data_Get_Struct(other, Vector4, v2);
         result->x = v->x / v2->x;
         result->y = v->y / v2->y;
         result->z = v->z / v2->z;
         result->w = v->w / v2->w;
-    }
-    else
-    {
+    } else {
         float scalar = 1.0f / NUM2FLT(other);
         result->x = v->x * scalar;
         result->y = v->y * scalar;
@@ -295,6 +284,29 @@ VALUE rb_vector4_negate(VALUE self) {
     result->w = -v->w;
 
     return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_vector4_map(VALUE self) {
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+
+    result->x = NUM2FLT(rb_yield(DBL2NUM(v->x)));
+    result->y = NUM2FLT(rb_yield(DBL2NUM(v->y)));
+    result->z = NUM2FLT(rb_yield(DBL2NUM(v->z)));
+    result->w = NUM2FLT(rb_yield(DBL2NUM(v->w)));
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_vector4_map_bang(VALUE self) {
+    VECTOR4();
+
+    v->x = NUM2FLT(rb_yield(DBL2NUM(v->x)));
+    v->y = NUM2FLT(rb_yield(DBL2NUM(v->y)));
+    v->z = NUM2FLT(rb_yield(DBL2NUM(v->z)));
+    v->w = NUM2FLT(rb_yield(DBL2NUM(v->w)));
+
+    return self;
 }
 
 VALUE rb_vector4_to_s(VALUE self) {
@@ -350,7 +362,7 @@ VALUE rb_vector4_to_plane(VALUE self) {
     VECTOR4();
     Plane *p = ALLOC(Plane);
     memcpy(p, v, sizeof(Vector4));
-    return NUMERIX_WRAP(rb_cPlane, p);   
+    return NUMERIX_WRAP(rb_cPlane, p);
 }
 
 VALUE rb_vector4_min_value(VALUE self) {
@@ -436,6 +448,19 @@ VALUE rb_vector4_sqrt(VALUE self) {
     return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
+VALUE rb_vector4_pow(VALUE self, VALUE exponent) {
+    VECTOR4();
+    Vector4 *result = ALLOC(Vector4);
+    float e = fabsf(NUM2FLT(exponent));
+
+    result->x = powf(fabsf(v->x), e);
+    result->y = powf(fabsf(v->y), e);
+    result->z = powf(fabsf(v->z), e);
+    result->w = powf(fabsf(v->w), e);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
 VALUE rb_vector4_dot(VALUE self, VALUE other) {
     Vector4 *v1, *v2;
     Data_Get_Struct(self, Vector4, v1);
@@ -482,7 +507,6 @@ VALUE rb_vector4_transform_bang(VALUE self, VALUE other) {
     return self;
 }
 
-
 VALUE rb_vector4_clamp_bang(VALUE self, VALUE min, VALUE max) {
     struct RData *rdata = RDATA(self);
     VALUE result = rb_vector4_clamp_s(rdata->basic.klass, self, min, max);
@@ -492,7 +516,6 @@ VALUE rb_vector4_clamp_bang(VALUE self, VALUE min, VALUE max) {
     return self;
 }
 
-
 static inline VALUE rb_vector4_clamp_s(VALUE klass, VALUE vector, VALUE minimum, VALUE maximum) {
     Vector4 *v, *result;
     Data_Get_Struct(vector, Vector4, v);
@@ -501,8 +524,7 @@ static inline VALUE rb_vector4_clamp_s(VALUE klass, VALUE vector, VALUE minimum,
 
     // This compare order is very important!!!
     // We must follow HLSL behavior in the case user specified min value is bigger than max value.
-    if (NUMERIX_TYPE_P(minimum, rb_cVector4) && NUMERIX_TYPE_P(maximum, rb_cVector4))
-    {
+    if (NUMERIX_TYPE_P(minimum, rb_cVector4) && NUMERIX_TYPE_P(maximum, rb_cVector4)) {
         Vector4 *min, *max;
         Data_Get_Struct(minimum, Vector4, min);
         Data_Get_Struct(maximum, Vector4, max);
@@ -518,9 +540,7 @@ static inline VALUE rb_vector4_clamp_s(VALUE klass, VALUE vector, VALUE minimum,
 
         w = NUMERIX_MIN(w, max->w);
         w = NUMERIX_MAX(w, min->w);
-    }
-    else
-    {
+    } else {
         float minf = NUM2FLT(minimum);
         float maxf = NUM2FLT(maximum);
 
@@ -564,47 +584,37 @@ static inline VALUE rb_vector4_transform_s(VALUE klass, VALUE vector, VALUE matr
     Vector4 *v, *result;
     result = ALLOC(Vector4);
 
-    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
-    {
+    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4)) {
         Matrix4x4 *m;
         Data_Get_Struct(matrix, Matrix4x4, m);
-        if (NUMERIX_TYPE_P(vector, rb_cVector2))
-        {
+        if (NUMERIX_TYPE_P(vector, rb_cVector2)) {
             result->x = v->x * m->m11 + v->y * m->m21 + m->m41;
             result->y = v->x * m->m12 + v->y * m->m22 + m->m42;
             result->z = v->x * m->m13 + v->y * m->m23 + m->m43;
             result->w = v->x * m->m14 + v->y * m->m24 + m->m44;
-        }
-        else if (NUMERIX_TYPE_P(vector, rb_cVector3))
-        {
+        } else if (NUMERIX_TYPE_P(vector, rb_cVector3)) {
             result->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + m->m41;
             result->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + m->m42;
             result->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + m->m43;
             result->w = v->x * m->m14 + v->y * m->m24 + v->z * m->m34 + m->m44;
-        }
-        else if (NUMERIX_TYPE_P(vector, rb_cVector4))
-        {
+        } else if (NUMERIX_TYPE_P(vector, rb_cVector4)) {
             result->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + v->w * m->m41;
             result->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + v->w * m->m42;
             result->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + v->w * m->m43;
             result->w = v->x * m->m14 + v->y * m->m24 + v->z * m->m34 + v->w * m->m44;
-        }
-        else
+        } else
             rb_raise(rb_eTypeError, "%s is not a valid Vector type", CLASS_NAME(vector));
-    }
-    else if (NUMERIX_TYPE_P(matrix, rb_cQuaternion))
-    {
+    } else if (NUMERIX_TYPE_P(matrix, rb_cQuaternion)) {
         Quaternion *q;
         Data_Get_Struct(matrix, Quaternion, q);
         float x2, y2, z2, wx2, wy2, wz2, xx2, xy2, xz2, yy2, yz2, zz2;
-        if (NUMERIX_TYPE_P(vector, rb_cVector2))
-        {
+        if (NUMERIX_TYPE_P(vector, rb_cVector2)) {
             Vector2 *v2;
             Data_Get_Struct(vector, Vector2, v2);
             x2 = q->x + q->x;
             y2 = q->y + q->y;
             z2 = q->z + q->z;
- 
+
             wx2 = q->w * x2;
             wy2 = q->w * y2;
             wz2 = q->w * z2;
@@ -614,20 +624,18 @@ static inline VALUE rb_vector4_transform_s(VALUE klass, VALUE vector, VALUE matr
             yy2 = q->y * y2;
             yz2 = q->y * z2;
             zz2 = q->z * z2;
- 
+
             result->x = v2->x * (1.0f - yy2 - zz2) + v2->y * (xy2 - wz2);
             result->y = v2->x * (xy2 + wz2) + v2->y * (1.0f - xx2 - zz2);
             result->z = v2->x * (xz2 - wy2) + v2->y * (yz2 + wx2);
             result->w = 1.0f;
-        }
-        else if (NUMERIX_TYPE_P(vector, rb_cVector3))
-        {
+        } else if (NUMERIX_TYPE_P(vector, rb_cVector3)) {
             Vector3 *v3;
             Data_Get_Struct(vector, Vector3, v3);
             x2 = q->x + q->x;
             y2 = q->y + q->y;
             z2 = q->z + q->z;
- 
+
             wx2 = q->w * x2;
             wy2 = q->w * y2;
             wz2 = q->w * z2;
@@ -637,20 +645,18 @@ static inline VALUE rb_vector4_transform_s(VALUE klass, VALUE vector, VALUE matr
             yy2 = q->y * y2;
             yz2 = q->y * z2;
             zz2 = q->z * z2;
- 
+
             result->x = v3->x * (1.0f - yy2 - zz2) + v3->y * (xy2 - wz2) + v3->z * (xz2 + wy2);
             result->y = v3->x * (xy2 + wz2) + v3->y * (1.0f - xx2 - zz2) + v3->z * (yz2 - wx2);
             result->z = v3->x * (xz2 - wy2) + v3->y * (yz2 + wx2) + v3->z * (1.0f - xx2 - yy2);
             result->w = 1.0f;
-        }
-        else if (NUMERIX_TYPE_P(vector, rb_cVector4))
-        {
+        } else if (NUMERIX_TYPE_P(vector, rb_cVector4)) {
             Vector4 *v4;
             Data_Get_Struct(vector, Vector4, v4);
             x2 = q->x + q->x;
             y2 = q->y + q->y;
             z2 = q->z + q->z;
- 
+
             wx2 = q->w * x2;
             wy2 = q->w * y2;
             wz2 = q->w * z2;
@@ -660,25 +666,21 @@ static inline VALUE rb_vector4_transform_s(VALUE klass, VALUE vector, VALUE matr
             yy2 = q->y * y2;
             yz2 = q->y * z2;
             zz2 = q->z * z2;
- 
+
             result->x = v4->x * (1.0f - yy2 - zz2) + v4->y * (xy2 - wz2) + v4->z * (xz2 + wy2);
             result->y = v4->x * (xy2 + wz2) + v4->y * (1.0f - xx2 - zz2) + v4->z * (yz2 - wx2);
             result->z = v4->x * (xz2 - wy2) + v4->y * (yz2 + wx2) + v4->z * (1.0f - xx2 - yy2);
             result->w = v4->w;
-        }
-        else
+        } else
             rb_raise(rb_eTypeError, "%s is not a valid Vector type", CLASS_NAME(vector));
 
-    }
-    else
-    {
+    } else {
         rb_raise(rb_eTypeError, "%s is not a valid Matrix4x4 or Quaternion", CLASS_NAME(matrix));
         return Qnil;
     }
 
     return NUMERIX_WRAP(klass, result);
 }
-
 
 static inline VALUE rb_vector4_min_s(VALUE klass, VALUE vec1, VALUE vec2) {
     Vector4 *v1, *v2, *result;

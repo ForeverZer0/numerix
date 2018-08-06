@@ -27,8 +27,4 @@ VALUE rb_vector_base_y_set(VALUE self, VALUE value);
 VALUE rb_vector_base_z_set(VALUE self, VALUE value);
 VALUE rb_vector_base_w_set(VALUE self, VALUE value);
 
-VALUE rb_vector_base_map(VALUE self);
-VALUE rb_vector_base_map_bang(VALUE self);
-VALUE rb_vector_base_pow(VALUE self, VALUE exponent);
-
 #endif /* NUMERIX_VECTOR_BASE_H */

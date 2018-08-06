@@ -14,7 +14,7 @@ VALUE rb_numerix_aset(VALUE self, VALUE index, VALUE value);
 VALUE rb_numerix_each(VALUE self);
 
 #if RUBY_API_VERSION_MAJOR >= 2
-    VALUE rb_numerix_fiddle_ptr(VALUE self);
+VALUE rb_numerix_fiddle_ptr(VALUE self);
 #endif
 
 static inline int rb_numerix_isize(VALUE klass);

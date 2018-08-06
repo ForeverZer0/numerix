@@ -33,6 +33,7 @@ VALUE rb_vector2_transform_normal(VALUE self, VALUE other);
 VALUE rb_vector2_transform_normal_bang(VALUE self, VALUE other);
 VALUE rb_vector2_abs(VALUE self);
 VALUE rb_vector2_sqrt(VALUE self);
+VALUE rb_vector2_pow(VALUE self, VALUE exponent);
 VALUE rb_vector2_dot(VALUE self, VALUE other);
 VALUE rb_vector2_cross_product(VALUE self, VALUE other);
 VALUE rb_vector2_clamp(VALUE self, VALUE min, VALUE max);
@@ -40,6 +41,8 @@ VALUE rb_vector2_clamp_bang(VALUE self, VALUE min, VALUE max);
 VALUE rb_vector2_reflect(VALUE self, VALUE other);
 VALUE rb_vector2_reflect_bang(VALUE self, VALUE other);
 VALUE rb_vector2_angle(VALUE self, VALUE other);
+VALUE rb_vector2_map(VALUE self);
+VALUE rb_vector2_map_bang(VALUE self);
 
 // Conversion
 VALUE rb_vector2_to_s(VALUE self);
@@ -57,6 +60,5 @@ static inline VALUE rb_vector2_clamp_s(VALUE klass, VALUE vector, VALUE min, VAL
 static inline VALUE rb_vector2_lerp_s(VALUE klass, VALUE vec1, VALUE vec2, VALUE amount);
 static inline VALUE rb_vector2_min_s(VALUE klass, VALUE vec1, VALUE vec2);
 static inline VALUE rb_vector2_max_s(VALUE klass, VALUE vec1, VALUE vec2);
-
 
 #endif /* NUMERIX_VECTOR2_H */

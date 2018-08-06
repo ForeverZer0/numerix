@@ -54,6 +54,50 @@ module Numerix
     end
 
     ##
+    # The equivalent of `Enumerable#map`, but returns a vector object instead of
+    # an Array.
+    #
+    # Invokes the given block once for each element of `self`.
+    #
+    # Creates a new vector containing the values returned by the block.
+    #
+    # @yield [component] Yields a component of the vector to the block.
+    # @yieldparam component [Float] The yielded component.
+    #
+    # @return [Vector3]
+
+    # @see map!
+    def map
+    end
+
+    ##
+    # Invokes the given block once for each element of self, replacing the
+    # element with the value returned by the block.
+    #
+    # The values of the vector are altered without creating a ne object.
+    #
+    # @yield [component] Yields a component of the vector to the block.
+    # @yieldparam component [Float] The yielded component.
+    #
+    # @return [self]
+    #
+    # @see map
+    def map!
+    end
+
+    alias_method :collect, :map
+    alias_method :collect!, :map!
+
+    ##
+    # Raises the vector to the given power.
+    #
+    # @param exponent [Float] The power to raise the vector to.
+    #
+    # @return [Vector3] New vector that is result of the operation.
+    def **(exponent)
+    end
+
+    ##
     # @return [Boolean] flag indicating if all values of the vector are equal
     #   to `1.0`.
     def one?

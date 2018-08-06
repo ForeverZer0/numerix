@@ -31,6 +31,9 @@ VALUE rb_matrix3x2_aset(int argc, VALUE *argv, VALUE self);
 VALUE rb_matrix3x2_invert(VALUE self);
 VALUE rb_matrix3x2_lerp(VALUE self, VALUE other, VALUE amount);
 VALUE rb_matrix3x2_lerp_bang(VALUE self, VALUE other, VALUE amount);
+VALUE rb_matrix3x2_pow(VALUE self, VALUE exponent);
+VALUE rb_matrix3x2_map(VALUE self);
+VALUE rb_matrix3x2_map_bang(VALUE self);
 
 // Conversion
 VALUE rb_matrix3x2_to_s(VALUE self);

@@ -2,7 +2,6 @@
 #include "vector3.h"
 
 void Init_vector3(VALUE outer) {
-    
     rb_define_alloc_func(rb_cVector3, rb_vector3_alloc);
 
     // Instance Methods
@@ -33,6 +32,8 @@ void Init_vector3(VALUE outer) {
     rb_define_method(rb_cVector3, "angle", rb_vector3_angle, 1);
     rb_define_method(rb_cVector3, "transform_normal", rb_vector3_transform_normal, 1);
     rb_define_method(rb_cVector3, "transform_normal!", rb_vector3_transform_normal_bang, 1);
+    rb_define_method(rb_cVector3, "map", rb_vector3_map, 0);
+    rb_define_method(rb_cVector3, "map!", rb_vector3_map_bang, 0);
 
     // Conversion
     rb_define_method(rb_cVector3, "to_s", rb_vector3_to_s, 0);
@@ -50,10 +51,13 @@ void Init_vector3(VALUE outer) {
     rb_define_method(rb_cVector3, "/", rb_vector3_divide, 1);
     rb_define_method(rb_cVector3, "==", rb_vector3_equal, 1);
     rb_define_method(rb_cVector3, "-@", rb_vector3_negate, 0);
+    rb_define_method(rb_cVector3, "**", rb_vector3_pow, 1);
 
     // Alias
     rb_define_alias(rb_cVector3, "magnitude", "length");
     rb_define_alias(rb_cVector3, "elements", "to_a");
+    rb_define_alias(rb_cVector3, "collect", "map");
+    rb_define_alias(rb_cVector3, "collect!", "map!");
 
     // Singleton Methods
     rb_define_singleton_method(rb_cVector3, "zero", rb_vector3_alloc, 0);
@@ -76,20 +80,17 @@ static VALUE rb_vector3_alloc(VALUE klass) {
 
 VALUE rb_vector3_initialize(int argc, VALUE *argv, VALUE self) {
     VECTOR3();
-    switch (argc)
-    {
+    switch (argc) {
         case 0:
             break;
-        case 1:
-        {
+        case 1: {
             float value = NUM2FLT(argv[0]);
             v->x = value;
             v->y = value;
             v->z = value;
             break;
         }
-        case 2:
-        {
+        case 2: {
             Vector2 *v2;
             Data_Get_Struct(argv[0], Vector2, v2);
             v->x = v2->x;
@@ -97,8 +98,7 @@ VALUE rb_vector3_initialize(int argc, VALUE *argv, VALUE self) {
             v->z = NUM2FLT(argv[1]);
             break;
         }
-        case 3:
-        {
+        case 3: {
             v->x = NUM2FLT(argv[0]);
             v->y = NUM2FLT(argv[1]);
             v->z = NUM2FLT(argv[2]);
@@ -107,7 +107,6 @@ VALUE rb_vector3_initialize(int argc, VALUE *argv, VALUE self) {
         default:
             rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 1, 2, 3)", argc);
             break;
-
     }
     return Qnil;
 }
@@ -151,7 +150,7 @@ VALUE rb_vector3_length(VALUE self) {
 
 VALUE rb_vector3_length_squared(VALUE self) {
     VECTOR3();
-    return DBL2NUM(v->x * v->x + v->y * v->y + v->z * v->z); 
+    return DBL2NUM(v->x * v->x + v->y * v->y + v->z * v->z);
 }
 
 VALUE rb_vector3_add(VALUE self, VALUE other) {
@@ -164,7 +163,7 @@ VALUE rb_vector3_add(VALUE self, VALUE other) {
     result->y = v1->y + v2->y;
     result->z = v1->z + v2->z;
 
-    return NUMERIX_WRAP(CLASS_OF(self), result); 
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_subtract(VALUE self, VALUE other) {
@@ -177,7 +176,7 @@ VALUE rb_vector3_subtract(VALUE self, VALUE other) {
     result->y = v1->y - v2->y;
     result->z = v1->z - v2->z;
 
-    return NUMERIX_WRAP(CLASS_OF(self), result); 
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_multiply(VALUE self, VALUE other) {
@@ -185,22 +184,19 @@ VALUE rb_vector3_multiply(VALUE self, VALUE other) {
     Data_Get_Struct(self, Vector3, v1);
     result = ALLOC(Vector3);
 
-    if (NUMERIX_TYPE_P(other, rb_cVector3))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cVector3)) {
         Vector3 *v2;
         Data_Get_Struct(other, Vector3, v2);
         result->x = v1->x * v2->x;
         result->y = v1->x * v2->y;
         result->z = v1->z * v2->z;
-    }
-    else
-    {
+    } else {
         float scalar = NUM2FLT(other);
         result->x = v1->x * scalar;
         result->y = v1->y * scalar;
         result->z = v1->z * scalar;
     }
-    return NUMERIX_WRAP(CLASS_OF(self), result); 
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_vector3_divide(VALUE self, VALUE other) {
@@ -208,16 +204,13 @@ VALUE rb_vector3_divide(VALUE self, VALUE other) {
     Data_Get_Struct(self, Vector3, v1);
     result = ALLOC(Vector3);
 
-    if (NUMERIX_TYPE_P(other, rb_cVector3))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cVector3)) {
         Vector3 *v2;
         Data_Get_Struct(other, Vector3, v2);
         result->x = v1->x / v2->x;
         result->y = v1->y / v2->y;
         result->z = v1->z / v2->z;
-    }
-    else
-    {
+    } else {
         float scalar = 1.0f / NUM2FLT(other);
         result->x = v1->x * scalar;
         result->y = v1->y * scalar;
@@ -235,6 +228,18 @@ VALUE rb_vector3_equal(VALUE self, VALUE other) {
     return FLT_EQUAL(v1->x, v2->x) && FLT_EQUAL(v1->y, v2->y) && FLT_EQUAL(v1->z, v2->z) ? Qtrue : Qfalse;
 }
 
+VALUE rb_vector3_pow(VALUE self, VALUE exponent) {
+    VECTOR3();
+    Vector3 *result = ALLOC(Vector3);
+    float e = fabsf(NUM2FLT(exponent));
+
+    result->x = powf(fabsf(v->x), e);
+    result->y = powf(fabsf(v->y), e);
+    result->z = powf(fabsf(v->z), e);
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
 VALUE rb_vector3_negate(VALUE self) {
     Vector3 *v, *result;
     Data_Get_Struct(self, Vector3, v);
@@ -245,6 +250,27 @@ VALUE rb_vector3_negate(VALUE self) {
     result->z = -v->z;
 
     return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_vector3_map(VALUE self) {
+    VECTOR3();
+    Vector3 *result = ALLOC(Vector3);
+
+    result->x = NUM2FLT(rb_yield(DBL2NUM(v->x)));
+    result->y = NUM2FLT(rb_yield(DBL2NUM(v->y)));
+    result->z = NUM2FLT(rb_yield(DBL2NUM(v->z)));
+
+    return NUMERIX_WRAP(CLASS_OF(self), result);
+}
+
+VALUE rb_vector3_map_bang(VALUE self) {
+    VECTOR3();
+
+    v->x = NUM2FLT(rb_yield(DBL2NUM(v->x)));
+    v->y = NUM2FLT(rb_yield(DBL2NUM(v->y)));
+    v->z = NUM2FLT(rb_yield(DBL2NUM(v->z)));
+
+    return self;
 }
 
 VALUE rb_vector3_to_s(VALUE self) {
@@ -301,7 +327,7 @@ VALUE rb_vector3_to_plane(VALUE self) {
     Plane *p = ALLOC(Plane);
     memcpy(p, v, sizeof(Vector3));
     p->distance = 0.0f;
-    return NUMERIX_WRAP(rb_cPlane, p);   
+    return NUMERIX_WRAP(rb_cPlane, p);
 }
 
 VALUE rb_vector3_min_value(VALUE self) {
@@ -342,7 +368,7 @@ VALUE rb_vector3_distance_squared(VALUE self, VALUE other) {
 
 VALUE rb_vector3_normalize(VALUE self) {
     VECTOR3();
-    Vector3 *result = ALLOC(Vector3); 
+    Vector3 *result = ALLOC(Vector3);
 
     float inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
     result->x = v->x * inv;
@@ -372,17 +398,14 @@ VALUE rb_vector3_transform(VALUE self, VALUE other) {
     Data_Get_Struct(self, Vector3, v);
     result = ALLOC(Vector3);
 
-    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4)) {
         Matrix4x4 *m;
         Data_Get_Struct(other, Matrix4x4, m);
 
         result->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + m->m41;
         result->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + m->m42;
         result->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + m->m43;
-    }
-    else
-    {
+    } else {
         Quaternion *q;
         Data_Get_Struct(other, Quaternion, q);
 
@@ -410,7 +433,7 @@ VALUE rb_vector3_transform(VALUE self, VALUE other) {
 
 VALUE rb_vector3_abs(VALUE self) {
     VECTOR3();
-    Vector3 *result = ALLOC(Vector3); 
+    Vector3 *result = ALLOC(Vector3);
 
     result->x = fabsf(v->x);
     result->y = fabsf(v->y);
@@ -421,7 +444,7 @@ VALUE rb_vector3_abs(VALUE self) {
 
 VALUE rb_vector3_sqrt(VALUE self) {
     VECTOR3();
-    Vector3 *result = ALLOC(Vector3); 
+    Vector3 *result = ALLOC(Vector3);
 
     result->x = sqrtf(v->x);
     result->y = sqrtf(v->y);
@@ -468,17 +491,14 @@ VALUE rb_vector3_lerp_bang(VALUE self, VALUE other, VALUE amount) {
 VALUE rb_vector3_transform_bang(VALUE self, VALUE other) {
     VECTOR3();
 
-    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4)) {
         Matrix4x4 *m;
         Data_Get_Struct(other, Matrix4x4, m);
 
         v->x = v->x * m->m11 + v->y * m->m21 + v->z * m->m31 + m->m41;
         v->y = v->x * m->m12 + v->y * m->m22 + v->z * m->m32 + m->m42;
         v->z = v->x * m->m13 + v->y * m->m23 + v->z * m->m33 + m->m43;
-    }
-    else
-    {
+    } else {
         Quaternion *q;
         Data_Get_Struct(other, Quaternion, q);
 
@@ -576,11 +596,10 @@ VALUE rb_vector3_reflect_bang(VALUE self, VALUE other) {
 }
 
 VALUE rb_vector3_angle(VALUE self, VALUE other) {
-
     Vector3 *v1, *v2, *n1, *n2;
     Data_Get_Struct(self, Vector3, v1);
     Data_Get_Struct(other, Vector3, v2);
-    
+
     n1 = ruby_xmalloc(sizeof(Vector3));
     n2 = ruby_xmalloc(sizeof(Vector3));
 
@@ -598,48 +617,47 @@ VALUE rb_vector3_angle(VALUE self, VALUE other) {
     float ratio = n1->x * n2->x + n1->y * n2->y + n1->z * n2->z;
 
     // The "straight forward" method of acos(u.v) has large precision
-    // issues when the dot product is near +/-1.  This is due to the 
-    // steep slope of the acos function as we approach +/- 1.  Slight 
+    // issues when the dot product is near +/-1.  This is due to the
+    // steep slope of the acos function as we approach +/- 1.  Slight
     // precision errors in the dot product calculation cause large
-    // variation in the output value. 
+    // variation in the output value.
     //
     //        |                   |
     //         \__                |
-    //            ---___          | 
+    //            ---___          |
     //                  ---___    |
-    //                        ---_|_ 
-    //                            | ---___ 
+    //                        ---_|_
+    //                            | ---___
     //                            |       ---___
-    //                            |             ---__ 
+    //                            |             ---__
     //                            |                  \
     //                            |                   |
     //       -|-------------------+-------------------|-
-    //       -1                   0                   1 
+    //       -1                   0                   1
     //
-    //                         acos(x) 
-    // 
+    //                         acos(x)
+    //
     // To avoid this we use an alternative method which finds the
-    // angle bisector by (u-v)/2: 
+    // angle bisector by (u-v)/2:
     //
     //                            _>
     //                       u  _-  \ (u-v)/2
-    //                        _-  __-v 
+    //                        _-  __-v
     //                      _=__--
-    //                    .=-----------> 
-    //                            v 
+    //                    .=----------->
+    //                            v
     //
-    // Because u and v and unit vectors, (u-v)/2 forms a right angle 
+    // Because u and v and unit vectors, (u-v)/2 forms a right angle
     // with the angle bisector.  The hypotenuse is 1, therefore
     // 2*asin(|u-v|/2) gives us the angle between u and v.
     //
-    // The largest possible value of |u-v| occurs with perpendicular 
+    // The largest possible value of |u-v| occurs with perpendicular
     // vectors and is sqrt(2)/2 which is well away from extreme slope
-    // at +/-1. 
+    // at +/-1.
 
     float theta;
     float length, x, y, z;
-    if (ratio < 0.0f)
-    { 
+    if (ratio < 0.0f) {
         // Compute length of difference
         x = -n1->x - n2->x;
         y = -n1->y - n2->y;
@@ -647,16 +665,14 @@ VALUE rb_vector3_angle(VALUE self, VALUE other) {
         length = sqrtf(x * x + y * y + z * z);
 
         theta = NUMERIX_PI - 2.0f * asinf(length / 2.0f);
-    } 
-    else
-    {
+    } else {
         // Compute length of difference
         x = n1->x - n2->x;
         y = n1->y - n2->y;
         z = n1->z - n2->z;
         length = sqrtf(x * x + y * y + z * z);
 
-        theta = 2.0f * asinf(length / 2.0f); 
+        theta = 2.0f * asinf(length / 2.0f);
     }
 
     ruby_xfree(n1);
@@ -700,8 +716,7 @@ static inline VALUE rb_vector3_clamp_s(VALUE klass, VALUE vector, VALUE minimum,
 
     // This compare order is very important!!!
     // We must follow HLSL behavior in the case user specified min value is bigger than max value.
-    if (NUMERIX_TYPE_P(minimum, rb_cVector3) && NUMERIX_TYPE_P(maximum, rb_cVector3))
-    {
+    if (NUMERIX_TYPE_P(minimum, rb_cVector3) && NUMERIX_TYPE_P(maximum, rb_cVector3)) {
         Vector3 *min, *max;
         Data_Get_Struct(minimum, Vector3, min);
         Data_Get_Struct(maximum, Vector3, max);
@@ -714,9 +729,7 @@ static inline VALUE rb_vector3_clamp_s(VALUE klass, VALUE vector, VALUE minimum,
 
         z = NUMERIX_MIN(z, max->z);
         z = NUMERIX_MAX(z, min->z);
-    }
-    else
-    {
+    } else {
         float minf = NUM2FLT(minimum);
         float maxf = NUM2FLT(maximum);
 

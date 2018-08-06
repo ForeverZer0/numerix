@@ -10,6 +10,8 @@ void Init_matrix_base(VALUE outer) {
     rb_cMatrix3x2 = rb_define_class_under(outer, "Matrix3x2", rb_cMatrixBase);
     rb_cMatrix4x4 = rb_define_class_under(outer, "Matrix4x4", rb_cMatrixBase);
 
+    rb_define_method(rb_cMatrixBase, "initialize", rb_numerix_abstract_initialize, 0);
+
     rb_define_method(rb_cMatrix3x2, "m11", rb_matrix3x2_m11, 0);
     rb_define_method(rb_cMatrix3x2, "m12", rb_matrix3x2_m12, 0);
     rb_define_method(rb_cMatrix3x2, "m21", rb_matrix3x2_m21, 0);
@@ -58,54 +60,8 @@ void Init_matrix_base(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "m43=", rb_matrix4x4_m43_set, 1);
     rb_define_method(rb_cMatrix4x4, "m44=", rb_matrix4x4_m44_set, 1);
 
-    rb_define_method(rb_cMatrixBase, "map2", rb_matrix_base_map, 0);
-    rb_define_method(rb_cMatrixBase, "map2!", rb_matrix_base_map_bang, 0);
-
-    rb_define_method(rb_cMatrixBase, "**", rb_matrix_base_pow, 1);
-    rb_define_singleton_method(rb_cMatrixBase, "pow", rb_matrix_base_pow_s, 2);
-
-
+    PRIVATE_CLASS_METHOD(rb_cMatrixBase, "new");
     rb_include_module(rb_cMatrixBase, rb_mEnumerable);
-}
-
-VALUE rb_matrix_base_map(VALUE self) {
-    struct RData *rdata = RDATA(self);
-    int size = 0;
-
-    if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix3x2))
-        size = sizeof(float) * 6;
-    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix4x4))
-        size = sizeof(float) * 16;
-
-    float *flt = (float*) rdata->data;
-    float *result = (float*) ruby_xmalloc(size);
-
-    int count = size / sizeof(float);
-    for (int i = 0; i < count; i++)
-    {
-        result[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
-    }
-    
-    return NUMERIX_WRAP(rdata->basic.klass, result);
-}
-
-VALUE rb_matrix_base_map_bang(VALUE self) {
-    struct RData *rdata = RDATA(self);
-
-    int count = 0;
-    if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix3x2))
-        count = 6;
-    else if (NUMERIX_INHERIT_P(rdata->basic.klass, rb_cMatrix4x4))
-        count = 16;
-
-    float *flt = (float*) rdata->data;
-
-    for (int i = 0; i < count; i++)
-    {
-        flt[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
-    }
-
-    return self;
 }
 
 VALUE rb_matrix3x2_m11(VALUE self) {
@@ -348,25 +304,4 @@ VALUE rb_matrix4x4_m44_set(VALUE self, VALUE value) {
     MATRIX4X4();
     m->m44 = NUM2FLT(value);
     return value;
-}
-
-VALUE rb_matrix_base_pow(VALUE self, VALUE exponent) {
-    return rb_matrix_base_pow_s(CLASS_OF(self), self, exponent);
-}
-
-static inline VALUE rb_matrix_base_pow_s(VALUE klass, VALUE matrix, VALUE exponent) {
-    int count = 0;
-    if (NUMERIX_INHERIT_P(klass, rb_cMatrix4x4))
-        count = 16;
-    else if (NUMERIX_INHERIT_P(klass, rb_cMatrix3x2))
-        count = 6;
-    
-    float *m = RDATA(matrix)->data;
-    float *result = ruby_xmalloc(count * sizeof(float));
-    float e = fabsf(NUM2FLT(exponent));
-
-    for (int i = 0; i < count; i++)
-        result[i] = powf(fabsf(m[i]), e);
-
-    return NUMERIX_WRAP(klass, result);
 }

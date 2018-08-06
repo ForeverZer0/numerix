@@ -194,7 +194,7 @@ module Numerix
     # @return [self]
     #
     # @see slerp
-    def slerp!(quaternion)
+    def slerp!(quaternion, amount)
     end
 
     ##

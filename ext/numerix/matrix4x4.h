@@ -3,8 +3,8 @@
 
 #include "common.h"
 #include "matrix_base.h"
-#include "quaternion.h"
 #include "plane.h"
+#include "quaternion.h"
 
 #define MATRIX4X4() \
     Matrix4x4 *m;   \
@@ -17,9 +17,9 @@ typedef struct CanonicalBasis {
 } CanonicalBasis;
 
 typedef struct VectorBasis {
-    Vector3* element0;
-    Vector3* element1;
-    Vector3* element2;
+    Vector3 *element0;
+    Vector3 *element1;
+    Vector3 *element2;
 } VectorBasis;
 
 void Init_matrix4x4(VALUE outer);
@@ -36,6 +36,7 @@ VALUE rb_matrix4x4_subtract(VALUE self, VALUE other);
 VALUE rb_matrix4x4_multiply(VALUE self, VALUE other);
 VALUE rb_matrix4x4_negate(VALUE self);
 VALUE rb_matrix4x4_equal(VALUE self, VALUE other);
+VALUE rb_matrix4x4_pow(VALUE self, VALUE exponent);
 VALUE rb_matrix4x4_row(VALUE self, VALUE row);
 VALUE rb_matrix4x4_column(VALUE self, VALUE column);
 VALUE rb_matrix4x4_each_row(VALUE self);
@@ -48,6 +49,8 @@ VALUE rb_matrix4x4_transform_bang(VALUE self, VALUE quaternion);
 VALUE rb_matrix4x4_transpose(VALUE self);
 VALUE rb_matrix4x4_lerp(VALUE self, VALUE other, VALUE amount);
 VALUE rb_matrix4x4_lerp_bang(VALUE self, VALUE other, VALUE amount);
+VALUE rb_matrix4x4_map(VALUE self);
+VALUE rb_matrix4x4_map_bang(VALUE self);
 
 // Conversion
 VALUE rb_matrix4x4_to_s(VALUE self);

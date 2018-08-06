@@ -37,27 +37,23 @@ static VALUE rb_plane_alloc(VALUE klass) {
 
 VALUE rb_plane_initialize(int argc, VALUE *argv, VALUE self) {
     PLANE();
-    switch (argc)
-    {
+    switch (argc) {
         case 0:
             break;
-        case 1:
-        {
+        case 1: {
             Vector4 *vec4;
             Data_Get_Struct(argv[0], Vector4, vec4);
             memcpy(p, vec4, sizeof(Vector4));
             break;
         }
-        case 2:
-        {
+        case 2: {
             Vector3 *vec3;
             Data_Get_Struct(argv[0], Vector3, vec3);
             memcpy(p, vec3, sizeof(Vector3));
             p->distance = NUM2FLT(argv[1]);
             break;
         }
-        case 4:
-        {
+        case 4: {
             p->normal.x = NUM2FLT(argv[0]);
             p->normal.y = NUM2FLT(argv[1]);
             p->normal.z = NUM2FLT(argv[2]);
@@ -67,7 +63,6 @@ VALUE rb_plane_initialize(int argc, VALUE *argv, VALUE self) {
         default:
             rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 1, 2, 4)", argc);
             break;
-
     }
     return Qnil;
 }
@@ -102,8 +97,10 @@ VALUE rb_plane_equal(VALUE self, VALUE other) {
     Plane *p1, *p2;
     Data_Get_Struct(self, Plane, p1);
     Data_Get_Struct(other, Plane, p2);
-    return FLT_EQUAL(p1->normal.x, p2->normal.x) && FLT_EQUAL(p1->normal.y, p2->normal.y) && 
-           FLT_EQUAL(p1->normal.z, p2->normal.z) && FLT_EQUAL(p1->distance, p2->distance) ? Qtrue : Qfalse;
+    return FLT_EQUAL(p1->normal.x, p2->normal.x) && FLT_EQUAL(p1->normal.y, p2->normal.y) &&
+                   FLT_EQUAL(p1->normal.z, p2->normal.z) && FLT_EQUAL(p1->distance, p2->distance)
+               ? Qtrue
+               : Qfalse;
 }
 
 VALUE rb_plane_to_s(VALUE self) {
@@ -115,8 +112,7 @@ VALUE rb_plane_transform(VALUE self, VALUE matrix) {
     PLANE();
     Plane *result = ALLOC(Plane);
 
-    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
-    {
+    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4)) {
         VALUE inverted = rb_matrix4x4_invert(matrix);
         Matrix4x4 *m;
         Data_Get_Struct(inverted, Matrix4x4, m);
@@ -127,9 +123,7 @@ VALUE rb_plane_transform(VALUE self, VALUE matrix) {
         result->normal.y = x * m->m21 + y * m->m22 + z * m->m23 + w * m->m24;
         result->normal.z = x * m->m31 + y * m->m32 + z * m->m33 + w * m->m34;
         result->distance = x * m->m41 + y * m->m42 + z * m->m43 + w * m->m44;
-    }
-    else 
-    {
+    } else {
         Quaternion *q;
         Data_Get_Struct(matrix, Quaternion, q);
 
@@ -174,8 +168,7 @@ VALUE rb_plane_transform(VALUE self, VALUE matrix) {
 VALUE rb_plane_transform_bang(VALUE self, VALUE matrix) {
     PLANE();
 
-    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4))
-    {
+    if (NUMERIX_TYPE_P(matrix, rb_cMatrix4x4)) {
         VALUE inverted = rb_matrix4x4_invert(matrix);
         Matrix4x4 *m;
         Data_Get_Struct(inverted, Matrix4x4, m);
@@ -186,9 +179,7 @@ VALUE rb_plane_transform_bang(VALUE self, VALUE matrix) {
         p->normal.y = x * m->m21 + y * m->m22 + z * m->m23 + w * m->m24;
         p->normal.z = x * m->m31 + y * m->m32 + z * m->m33 + w * m->m34;
         p->distance = x * m->m41 + y * m->m42 + z * m->m43 + w * m->m44;
-    }
-    else 
-    {
+    } else {
         Quaternion *q;
         Data_Get_Struct(matrix, Quaternion, q);
 
@@ -243,7 +234,6 @@ VALUE rb_plane_dot_coord(VALUE self, VALUE vec3) {
     Vector3 *v;
     Data_Get_Struct(vec3, Vector3, v);
     return DBL2NUM(p->normal.x * v->x + p->normal.y * v->y + p->normal.z * v->z + p->distance);
-
 }
 
 VALUE rb_plane_dot_normal(VALUE self, VALUE vec3) {
@@ -260,13 +250,10 @@ VALUE rb_plane_normalize(VALUE self) {
 
     float f = p->normal.x * p->normal.x + p->normal.y * p->normal.y + p->normal.z * p->normal.z;
 
-    if (fabsf(f - 1.0f) < FLT_EPSILON)
-    {
+    if (fabsf(f - 1.0f) < FLT_EPSILON) {
         // It already normalized, so we don't need to further process.
-        memcpy(result, p, sizeof(Plane)); 
-    }
-    else
-    {
+        memcpy(result, p, sizeof(Plane));
+    } else {
         float fInv = 1.0f / sqrtf(f);
         result->normal.x = p->normal.x * fInv;
         result->normal.y = p->normal.y * fInv;
@@ -281,8 +268,7 @@ VALUE rb_plane_normalize_bang(VALUE self) {
     PLANE();
     float f = p->normal.x * p->normal.x + p->normal.y * p->normal.y + p->normal.z * p->normal.z;
 
-    if (fabsf(f - 1.0f) >= FLT_EPSILON)
-    {
+    if (fabsf(f - 1.0f) >= FLT_EPSILON) {
         float fInv = 1.0f / sqrtf(f);
         p->normal.x = p->normal.x * fInv;
         p->normal.y = p->normal.y * fInv;
@@ -320,6 +306,6 @@ VALUE rb_plane_from_vertices_s(VALUE klass, VALUE vert1, VALUE vert2, VALUE vert
     p->normal.y = ny * invNorm;
     p->normal.z = nz * invNorm;
     p->distance = -(p->normal.x * v1->x + p->normal.y * v1->y + p->normal.z * v1->z);
-    
+
     return NUMERIX_WRAP(klass, p);
 }

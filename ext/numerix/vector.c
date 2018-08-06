@@ -51,33 +51,27 @@ VALUE rb_basic_vector_alloc(VALUE klass) {
 
 VALUE rb_basic_vector_initialize(int argc, VALUE *argv, VALUE self) {
     BASIC_VECTOR();
-    if (argc == 1)
-    {
+    if (argc == 1) {
         int count = NUM2INT(argv[0]);
-        if (count < 2)
-        {
+        if (count < 2) {
             rb_raise(rb_eNumerixError, "vector size must be 2 or greater");
             return Qnil;
         }
         v->count = count;
-        v->values = (float*) ruby_xmalloc(sizeof(float) * count);
+        v->values = (float *)ruby_xmalloc(sizeof(float) * count);
         memset(v->values, 0, count * sizeof(float));
-    }
-    else if (argc > 1)
-    {
+    } else if (argc > 1) {
         v->count = argc;
-        v->values = (float*) ruby_xmalloc(sizeof(float) * argc);
+        v->values = (float *)ruby_xmalloc(sizeof(float) * argc);
         for (int i = 0; i < argc; i++)
             v->values[i] = NUM2FLT(argv[i]);
-    }
-    else
+    } else
         rb_raise(rb_eArgError, "no arguments given");
 
     return Qnil;
 }
 
 VALUE rb_basic_vector_create(int argc, VALUE *argv, VALUE klass) {
-    
     if (argc < 2)
         rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 2 or more)", argc);
 
@@ -85,7 +79,8 @@ VALUE rb_basic_vector_create(int argc, VALUE *argv, VALUE klass) {
     v->count = argc;
     v->values = ruby_xmalloc(sizeof(float) * argc);
     for (int i = 0; i < argc; i++)
-        v->values[i] = NUM2FLT(argv[i]);rb_basic_vector_create;
+        v->values[i] = NUM2FLT(argv[i]);
+    rb_basic_vector_create;
 
     return NUMERIX_WRAP(klass, v);
 }
@@ -96,7 +91,7 @@ VALUE rb_basic_vector_length(VALUE self) {
     float length = 0.0f;
     for (int i = 0; i < c; i++)
         length += v->values[i] * v->values[i];
-    
+
     return DBL2NUM(sqrtf(length));
 }
 
@@ -106,7 +101,7 @@ VALUE rb_basic_vector_length_squared(VALUE self) {
     float length = 0.0f;
     for (int i = 0; i < c; i++)
         length += v->values[i] * v->values[i];
-    
+
     return DBL2NUM(length);
 }
 
@@ -159,17 +154,14 @@ VALUE rb_basic_vector_subtract(VALUE self, VALUE other) {
 VALUE rb_basic_vector_multiply(VALUE self, VALUE other) {
     BASIC_VECTOR_RESULT();
     int count = v->count;
-    if (NUMERIX_TYPE_P(other, rb_cBasicVector))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cBasicVector)) {
         BasicVector *v2;
         Data_Get_Struct(other, BasicVector, v2);
         if (count != v2->count)
             rb_raise(rb_eNumerixError, "unequal length vectors");
         for (int i = 0; i < count; i++)
             result->values[i] = v->values[i] * v2->values[i];
-    }
-    else
-    {
+    } else {
         float scalar = NUM2FLT(other);
         for (int i = 0; i < count; i++)
             result->values[i] = v->values[i] * scalar;
@@ -181,17 +173,14 @@ VALUE rb_basic_vector_multiply(VALUE self, VALUE other) {
 VALUE rb_basic_vector_divide(VALUE self, VALUE other) {
     BASIC_VECTOR_RESULT();
     int count = v->count;
-    if (NUMERIX_TYPE_P(other, rb_cBasicVector))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cBasicVector)) {
         BasicVector *v2;
         Data_Get_Struct(other, BasicVector, v2);
         if (count != v2->count)
             rb_raise(rb_eNumerixError, "unequal length vectors");
         for (int i = 0; i < count; i++)
             result->values[i] = v->values[i] / v2->values[i];
-    }
-    else
-    {
+    } else {
         float scalar = 1.0f / NUM2FLT(other);
         for (int i = 0; i < count; i++)
             result->values[i] = v->values[i] * scalar;
@@ -223,8 +212,7 @@ VALUE rb_basic_vector_equal(VALUE self, VALUE other) {
     if (count != v2->count)
         return Qfalse;
 
-    for (int i = 0; i < count; i++)
-    {
+    for (int i = 0; i < count; i++) {
         if (!FLT_EQUAL(v1->values[i], v2->values[i]))
             return Qfalse;
     }
@@ -239,13 +227,13 @@ VALUE rb_basic_vector_size(VALUE self) {
 
 VALUE rb_basic_vector_address(VALUE self) {
     BASIC_VECTOR();
-    #if (SIZEOF_INTPTR_T == 4)
-        return LONG2NUM((long) v->values);
-    #elif (SIZEOF_INTPTR_T == 8)
-        return LL2NUM((long long) v->values)
-    #else
-        return INT2NUM(0);
-    #endif
+#if (SIZEOF_INTPTR_T == 4)
+    return LONG2NUM((long)v->values);
+#elif (SIZEOF_INTPTR_T == 8)
+    return LL2NUM((long long)v->values)
+#else
+    return INT2NUM(0);
+#endif
 }
 
 VALUE rb_basic_vector_count(VALUE self) {
@@ -303,7 +291,7 @@ VALUE rb_basic_vector_dot(VALUE self, VALUE other) {
 VALUE rb_basic_vector_to_s(VALUE self) {
     VALUE ary = rb_funcall(self, rb_intern("to_a"), 0);
     VALUE str = rb_ary_join(ary, rb_str_new_cstr(", "));
-    return rb_sprintf("<%"PRIsVALUE">", str);
+    return rb_sprintf("<%" PRIsVALUE ">", str);
 }
 
 VALUE rb_basic_vector_abs(VALUE self) {

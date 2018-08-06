@@ -4,7 +4,6 @@ VALUE rb_mNumerix;
 VALUE rb_eNumerixError;
 
 void Init_numerix(void) {
-
     rb_mNumerix = rb_define_module("Numerix");
     rb_eNumerixError = rb_define_class_under(rb_mNumerix, "NumerixError", rb_eStandardError);
 
@@ -27,4 +26,8 @@ void Init_numerix(void) {
     rb_define_const(rb_mNumerix, "SIZEOF_MATRiX4X4", INT2NUM(sizeof(Matrix4x4)));
     rb_define_const(rb_mNumerix, "SIZEOF_QUATERNION", INT2NUM(sizeof(Quaternion)));
     rb_define_const(rb_mNumerix, "SIZEOF_PLANE", INT2NUM(sizeof(Plane)));
+}
+
+VALUE rb_numerix_abstract_initialize(VALUE self) {
+    rb_raise(rb_eNumerixError, "cannot create instance of abstract class %s", rb_class2name(CLASS_OF(self)));
 }

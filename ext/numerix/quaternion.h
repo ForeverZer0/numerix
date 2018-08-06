@@ -50,5 +50,4 @@ VALUE rb_quaternion_from_rotation_matrix(VALUE klass, VALUE matrix);
 static inline VALUE rb_quaternion_slerp_s(VALUE klass, VALUE quaternion1, VALUE quaternion2, VALUE amount);
 static inline VALUE rb_quaternion_lerp_s(VALUE klass, VALUE quaternion1, VALUE quaternion2, VALUE amount);
 
-
 #endif /* NUMERIX_QUATERNION_H */

@@ -31,9 +31,12 @@ VALUE rb_vector4_transform(VALUE self, VALUE other);
 VALUE rb_vector4_transform_bang(VALUE self, VALUE other);
 VALUE rb_vector4_abs(VALUE self);
 VALUE rb_vector4_sqrt(VALUE self);
+VALUE rb_vector4_pow(VALUE self, VALUE exponent);
 VALUE rb_vector4_dot(VALUE self, VALUE other);
 VALUE rb_vector4_clamp(VALUE self, VALUE min, VALUE max);
 VALUE rb_vector4_clamp_bang(VALUE self, VALUE min, VALUE max);
+VALUE rb_vector4_map(VALUE self);
+VALUE rb_vector4_map_bang(VALUE self);
 
 // Conversion
 VALUE rb_vector4_to_s(VALUE self);

@@ -53,12 +53,10 @@ VALUE rb_quaternion_alloc(VALUE klass) {
 
 VALUE rb_quaternion_initialize(int argc, VALUE *argv, VALUE self) {
     QUATERNION();
-    switch (argc)
-    {
+    switch (argc) {
         case 0:
             break;
-        case 2:
-        {
+        case 2: {
             Vector3 *v;
             Data_Get_Struct(argv[0], Vector3, v);
             q->x = v->x;
@@ -67,8 +65,7 @@ VALUE rb_quaternion_initialize(int argc, VALUE *argv, VALUE self) {
             q->w = NUM2FLT(argv[1]);
             break;
         }
-        case 4:
-        {
+        case 4: {
             q->x = NUM2FLT(argv[0]);
             q->y = NUM2FLT(argv[1]);
             q->z = NUM2FLT(argv[2]);
@@ -141,9 +138,8 @@ VALUE rb_quaternion_multiply(VALUE self, VALUE other) {
     Quaternion *q1, *result;
     Data_Get_Struct(self, Quaternion, q1);
     result = ALLOC(Quaternion);
- 
-    if (NUMERIX_TYPE_P(other, rb_cQuaternion))
-    {
+
+    if (NUMERIX_TYPE_P(other, rb_cQuaternion)) {
         Quaternion *q2;
         Data_Get_Struct(other, Quaternion, q2);
 
@@ -168,9 +164,7 @@ VALUE rb_quaternion_multiply(VALUE self, VALUE other) {
         result->y = q1y * q2w + q2y * q1w + cy;
         result->z = q1z * q2w + q2z * q1w + cz;
         result->w = q1w * q2w - dot;
-    }
-    else
-    {
+    } else {
         float scalar = NUM2FLT(other);
         result->x = q1->x * scalar;
         result->y = q1->y * scalar;
@@ -217,7 +211,7 @@ VALUE rb_quaternion_divide(VALUE self, VALUE other) {
     result->z = q1z * q2w + q2z * q1w + cz;
     result->w = q1w * q2w - dot;
 
-     return NUMERIX_WRAP(CLASS_OF(self), result);
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_equal(VALUE self, VALUE other) {
@@ -420,15 +414,12 @@ VALUE rb_quaternion_lerp(VALUE self, VALUE other, VALUE amount) {
     float t1 = 1.0f - t;
     float dot = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
 
-    if (dot >= 0.0f)
-    {
+    if (dot >= 0.0f) {
         result->x = t1 * q1->x + t * q2->x;
         result->y = t1 * q1->y + t * q2->y;
         result->z = t1 * q1->z + t * q2->z;
         result->w = t1 * q1->w + t * q2->w;
-    }
-    else
-    {
+    } else {
         result->x = t1 * q1->x - t * q2->x;
         result->y = t1 * q1->y - t * q2->y;
         result->z = t1 * q1->z - t * q2->z;
@@ -456,15 +447,12 @@ VALUE rb_quaternion_lerp_bang(VALUE self, VALUE other, VALUE amount) {
     float t1 = 1.0f - t;
     float dot = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
 
-    if (dot >= 0.0f)
-    {
+    if (dot >= 0.0f) {
         q1->x = t1 * q1->x + t * q2->x;
         q1->y = t1 * q1->y + t * q2->y;
         q1->z = t1 * q1->z + t * q2->z;
         q1->w = t1 * q1->w + t * q2->w;
-    }
-    else
-    {
+    } else {
         q1->x = t1 * q1->x - t * q2->x;
         q1->y = t1 * q1->y - t * q2->y;
         q1->z = t1 * q1->z - t * q2->z;
@@ -487,7 +475,7 @@ VALUE rb_quaternion_slerp(VALUE self, VALUE other, VALUE amount) {
     Quaternion *q1, *q2, *result;
     Data_Get_Struct(self, Quaternion, q1);
     Data_Get_Struct(other, Quaternion, q2);
-    
+
     const float epsilon = 1e-6f;
 
     float t = amount;
@@ -495,27 +483,23 @@ VALUE rb_quaternion_slerp(VALUE self, VALUE other, VALUE amount) {
     int flip = 0;
     float s1, s2;
 
-    if (cosOmega < 0.0f)
-    {
+    if (cosOmega < 0.0f) {
         flip = 1;
         cosOmega = -cosOmega;
     }
 
-    if (cosOmega > (1.0f - epsilon))
-    {
+    if (cosOmega > (1.0f - epsilon)) {
         // Too close, do straight linear interpolation.
         s1 = 1.0f - t;
         s2 = (flip) ? -t : t;
-    }
-    else
-    {
+    } else {
         float omega = acosf(cosOmega);
         float invSinOmega = 1.0f / sinf(omega);
 
         s1 = sinf((1.0f - t) * omega) * invSinOmega;
         s2 = (flip)
-            ? -sinf(t * omega) * invSinOmega
-            : sinf(t * omega) * invSinOmega;
+                 ? -sinf(t * omega) * invSinOmega
+                 : sinf(t * omega) * invSinOmega;
     }
 
     result = ALLOC(Quaternion);
@@ -524,14 +508,14 @@ VALUE rb_quaternion_slerp(VALUE self, VALUE other, VALUE amount) {
     result->z = s1 * q1->z + s2 * q2->z;
     result->w = s1 * q1->w + s2 * q2->w;
 
-    return NUMERIX_WRAP(CLASS_OF(self), result);   
+    return NUMERIX_WRAP(CLASS_OF(self), result);
 }
 
 VALUE rb_quaternion_slerp_bang(VALUE self, VALUE other, VALUE amount) {
     Quaternion *q1, *q2;
     Data_Get_Struct(self, Quaternion, q1);
     Data_Get_Struct(other, Quaternion, q2);
-    
+
     const float epsilon = 1e-6f;
 
     float t = amount;
@@ -539,27 +523,23 @@ VALUE rb_quaternion_slerp_bang(VALUE self, VALUE other, VALUE amount) {
     int flip = 0;
     float s1, s2;
 
-    if (cosOmega < 0.0f)
-    {
+    if (cosOmega < 0.0f) {
         flip = 1;
         cosOmega = -cosOmega;
     }
 
-    if (cosOmega > (1.0f - epsilon))
-    {
+    if (cosOmega > (1.0f - epsilon)) {
         // Too close, do straight linear interpolation.
         s1 = 1.0f - t;
         s2 = (flip) ? -t : t;
-    }
-    else
-    {
+    } else {
         float omega = acosf(cosOmega);
         float invSinOmega = 1.0f / sinf(omega);
 
         s1 = sinf((1.0f - t) * omega) * invSinOmega;
         s2 = (flip)
-            ? -sinf(t * omega) * invSinOmega
-            : sinf(t * omega) * invSinOmega;
+                 ? -sinf(t * omega) * invSinOmega
+                 : sinf(t * omega) * invSinOmega;
     }
 
     q1->x = s1 * q1->x + s2 * q2->x;
@@ -621,38 +601,30 @@ VALUE rb_quaternion_from_rotation_matrix(VALUE klass, VALUE matrix) {
 
     float trace = m->m11 + m->m22 + m->m33;
     float s;
-    if (trace > 0.0f)
-    {
+    if (trace > 0.0f) {
         s = sqrtf(trace + 1.0f);
         q->w = s * 0.5f;
         s = 0.5f / s;
         q->x = (m->m23 - m->m32) * s;
         q->y = (m->m31 - m->m13) * s;
         q->z = (m->m12 - m->m21) * s;
-    }
-    else
-    {
+    } else {
         float invS;
-        if (m->m11 >= m->m22 && m->m11 >= m->m33)
-        {
+        if (m->m11 >= m->m22 && m->m11 >= m->m33) {
             s = sqrtf(1.0f + m->m11 - m->m22 - m->m33);
             invS = 0.5f / s;
             q->x = 0.5f * s;
             q->y = (m->m12 + m->m21) * invS;
             q->z = (m->m13 + m->m31) * invS;
             q->w = (m->m23 - m->m32) * invS;
-        }
-        else if (m->m22 > m->m33)
-        {
+        } else if (m->m22 > m->m33) {
             s = sqrtf(1.0f + m->m22 - m->m11 - m->m33);
             invS = 0.5f / s;
             q->x = (m->m21 + m->m12) * invS;
             q->y = 0.5f * s;
             q->z = (m->m32 + m->m23) * invS;
             q->w = (m->m31 - m->m13) * invS;
-        }
-        else
-        {
+        } else {
             s = sqrtf(1.0f + m->m33 - m->m11 - m->m22);
             invS = 0.5f / s;
             q->x = (m->m31 + m->m13) * invS;
@@ -669,7 +641,7 @@ static inline VALUE rb_quaternion_slerp_s(VALUE klass, VALUE quaternion1, VALUE 
     Quaternion *q1, *q2, *result;
     Data_Get_Struct(quaternion1, Quaternion, q1);
     Data_Get_Struct(quaternion2, Quaternion, q2);
-    
+
     const float epsilon = 1e-6f;
 
     float t = amount;
@@ -677,27 +649,23 @@ static inline VALUE rb_quaternion_slerp_s(VALUE klass, VALUE quaternion1, VALUE 
     int flip = 0;
     float s1, s2;
 
-    if (cosOmega < 0.0f)
-    {
+    if (cosOmega < 0.0f) {
         flip = 1;
         cosOmega = -cosOmega;
     }
 
-    if (cosOmega > (1.0f - epsilon))
-    {
+    if (cosOmega > (1.0f - epsilon)) {
         // Too close, do straight linear interpolation.
         s1 = 1.0f - t;
         s2 = (flip) ? -t : t;
-    }
-    else
-    {
+    } else {
         float omega = acosf(cosOmega);
         float invSinOmega = 1.0f / sinf(omega);
 
         s1 = sinf((1.0f - t) * omega) * invSinOmega;
         s2 = (flip)
-            ? -sinf(t * omega) * invSinOmega
-            : sinf(t * omega) * invSinOmega;
+                 ? -sinf(t * omega) * invSinOmega
+                 : sinf(t * omega) * invSinOmega;
     }
 
     result = ALLOC(Quaternion);
@@ -719,15 +687,12 @@ static inline VALUE rb_quaternion_lerp_s(VALUE klass, VALUE quaternion1, VALUE q
     float t1 = 1.0f - t;
     float dot = q1->x * q2->x + q1->y * q2->y + q1->z * q2->z + q1->w * q2->w;
 
-    if (dot >= 0.0f)
-    {
+    if (dot >= 0.0f) {
         result->x = t1 * q1->x + t * q2->x;
         result->y = t1 * q1->y + t * q2->y;
         result->z = t1 * q1->z + t * q2->z;
         result->w = t1 * q1->w + t * q2->w;
-    }
-    else
-    {
+    } else {
         result->x = t1 * q1->x - t * q2->x;
         result->y = t1 * q1->y - t * q2->y;
         result->z = t1 * q1->z - t * q2->z;

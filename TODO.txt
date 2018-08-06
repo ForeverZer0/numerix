@@ -1,29 +1,19 @@
 
-- Add instance methods (pure, destructive) to each class where only class methods exist
-
 
 fix equality checking (consistent)
 
-Vector.create_normalized(x, y [,z, [, w]])
 
 coerce  Ruby Vector, Matrix, Pointer, etc 
 
 
+DOCUMENTE ** function in matrix classes !!!!!!!!!!!
+
+MOVE ** from VectorBase to individual vector classes and document
 
 [equiv, self]
 
 
 RANGE ERRORS IN MATRIX CLASS(ES)
-
-/////////////// VECTOR INSTANCE METHODS //////////////////////////////
-
-angle (?)
-
-
-** NO transform_normal for Vector4 **
-
-//////////////////////////////////////////////////////////////////////////
-
 
 
 //////////////// PLANE /////////////////////////////

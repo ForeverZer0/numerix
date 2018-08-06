@@ -7,5 +7,6 @@ require_relative 'numerix/numerix'
 # @author Eric "ForeverZer0" Freed
 module Numerix
 
+  m = VectorB
 
 end

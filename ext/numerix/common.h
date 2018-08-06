@@ -13,12 +13,14 @@
 #define NUMERIX_PI 3.141593f
 #define NUMERIX_HALF_PI 1.570796f
 
-#define NUM2FLT(value) ((float) rb_num2dbl(value))
+#define NUM2FLT(value) ((float)rb_num2dbl(value))
 #define NUMERIX_WRAP(klass, ptr) Data_Wrap_Struct(klass, NULL, RUBY_DEFAULT_FREE, ptr)
 
 #define CLASS_NAME(obj) rb_class2name(CLASS_OF(obj))
 
 #define FLT_EQUAL(a, b) fabsf(a - b) < FLT_EPSILON
+
+#define PRIVATE_CLASS_METHOD(klass, methodName) rb_funcall(klass, rb_intern("private_class_method"), 1, ID2SYM(rb_intern(methodName)))
 
 typedef struct Vector2 {
     float x; /* The X component of the vector. */
@@ -88,6 +90,7 @@ typedef struct BasicVector {
     float *values;
 } BasicVector;
 
+extern VALUE rb_numerix_abstract_initialize(VALUE self);
 extern VALUE rb_mNumerix;
 extern VALUE rb_eNumerixError;
 extern VALUE rb_cNumerixStruct;

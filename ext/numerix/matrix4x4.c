@@ -1,9 +1,7 @@
 
 #include "matrix4x4.h"
 
-
 void Init_matrix4x4(VALUE outer) {
-    
     rb_define_alloc_func(rb_cMatrix4x4, rb_matrix4x4_allocate);
     rb_define_method(rb_cMatrix4x4, "initialize", rb_matrix4x4_initialize, -1);
 
@@ -22,13 +20,19 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "transpose", rb_matrix4x4_transpose, 0);
     rb_define_method(rb_cMatrix4x4, "lerp", rb_matrix4x4_lerp, 2);
     rb_define_method(rb_cMatrix4x4, "lerp!", rb_matrix4x4_lerp_bang, 2);
+    rb_define_method(rb_cMatrix4x4, "map", rb_matrix4x4_map, 0);
+    rb_define_method(rb_cMatrix4x4, "map2!", rb_matrix4x4_map_bang, 0);
+
+    // Alias
+    rb_define_alias(rb_cMatrix4x4, "collect", "map");
+    rb_define_alias(rb_cMatrix4x4, "collect2!", "map2!");
 
     // Conversion
     rb_define_method(rb_cMatrix4x4, "to_s", rb_matrix4x4_to_s, 0);
     rb_define_method(rb_cMatrix4x4, "to_a", rb_matrix4x4_to_a, 0);
     rb_define_method(rb_cMatrix4x4, "to_h", rb_matrix4x4_to_h, 0);
     // to_mat3
-    
+
     // Operators
     rb_define_method(rb_cMatrix4x4, "+", rb_matrix4x4_add, 1);
     rb_define_method(rb_cMatrix4x4, "-", rb_matrix4x4_subtract, 1);
@@ -37,6 +41,7 @@ void Init_matrix4x4(VALUE outer) {
     rb_define_method(rb_cMatrix4x4, "==", rb_matrix4x4_equal, 1);
     rb_define_method(rb_cMatrix4x4, "[]", rb_matrix4x4_aref, -1);
     rb_define_method(rb_cMatrix4x4, "[]=", rb_matrix4x4_aset, -1);
+    rb_define_method(rb_cMatrix4x4, "**", rb_matrix4x4_pow, 1);
 
     // // Class
     rb_define_singleton_method(rb_cMatrix4x4, "identity", rb_matrix4x4_identity, 0);
@@ -97,8 +102,7 @@ static VALUE rb_matrix4x4_allocate(VALUE klass) {
 
 VALUE rb_matrix4x4_initialize(int argc, VALUE *argv, VALUE self) {
     MATRIX4X4();
-    if (argc == 16)
-    {
+    if (argc == 16) {
         m->m11 = NUM2FLT(argv[0]);
         m->m12 = NUM2FLT(argv[1]);
         m->m13 = NUM2FLT(argv[2]);
@@ -115,11 +119,8 @@ VALUE rb_matrix4x4_initialize(int argc, VALUE *argv, VALUE self) {
         m->m42 = NUM2FLT(argv[13]);
         m->m43 = NUM2FLT(argv[14]);
         m->m44 = NUM2FLT(argv[15]);
-    }
-    else if (argc == 1)
-    {
-        if (NUMERIX_TYPE_P(argv[0], rb_cMatrix3x2))
-        {
+    } else if (argc == 1) {
+        if (NUMERIX_TYPE_P(argv[0], rb_cMatrix3x2)) {
             Matrix3x2 *value;
             Data_Get_Struct(argv[0], Matrix3x2, value);
             m->m11 = value->m11;
@@ -138,16 +139,13 @@ VALUE rb_matrix4x4_initialize(int argc, VALUE *argv, VALUE self) {
             m->m42 = value->m32;
             m->m43 = 0.0f;
             m->m44 = 1.0f;
-        }
-        else
-        {
+        } else {
             float value = NUM2FLT(argv[0]);
-            float *p = (float*) m;
+            float *p = (float *)m;
             for (int i = 0; i < 16; i++)
                 p[i] = value;
         }
-    }
-    else if (argc != 0)
+    } else if (argc != 0)
         rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 0, 16)", argc);
 
     return Qnil;
@@ -223,10 +221,12 @@ VALUE rb_matrix4x4_lerp_bang(VALUE self, VALUE other, VALUE amount) {
 VALUE rb_matrix4x4_identity_p(VALUE self) {
     MATRIX4X4();
     // Check diagonal element first for early out.
-    return m->m11 == 1.0f && m->m22 == 1.0f && m->m33 == 1.0f && m->m44 == 1.0f && 
-           m->m12 == 0.0f && m->m13 == 0.0f && m->m14 == 0.0f && m->m21 == 0.0f && 
-           m->m23 == 0.0f && m->m24 == 0.0f && m->m31 == 0.0f && m->m32 == 0.0f && 
-           m->m34 == 0.0f && m->m41 == 0.0f && m->m42 == 0.0f && m->m43 == 0.0f ? Qtrue : Qfalse;
+    return m->m11 == 1.0f && m->m22 == 1.0f && m->m33 == 1.0f && m->m44 == 1.0f &&
+                   m->m12 == 0.0f && m->m13 == 0.0f && m->m14 == 0.0f && m->m21 == 0.0f &&
+                   m->m23 == 0.0f && m->m24 == 0.0f && m->m31 == 0.0f && m->m32 == 0.0f &&
+                   m->m34 == 0.0f && m->m41 == 0.0f && m->m42 == 0.0f && m->m43 == 0.0f
+               ? Qtrue
+               : Qfalse;
 }
 
 VALUE rb_matrix4x4_translation(VALUE self) {
@@ -260,9 +260,9 @@ VALUE rb_matrix4x4_determinant(VALUE self) {
     // a | j k l | = a ( f ( kp - lo ) - g ( jp - ln ) + h ( jo - kn ) )
     //   | n o p |
     //
-    //   | e g h |     
+    //   | e g h |
     // b | i k l | = b ( e ( kp - lo ) - g ( ip - lm ) + h ( io - km ) )
-    //   | m o p |     
+    //   | m o p |
     //
     //   | e f h |
     // c | i j l | = c ( e ( jp - ln ) - f ( ip - lm ) + h ( in - jm ) )
@@ -294,14 +294,13 @@ VALUE rb_matrix4x4_determinant(VALUE self) {
                    b * (e * kp_lo - g * ip_lm + h * io_km) +
                    c * (e * jp_ln - f * ip_lm + h * in_jm) -
                    d * (e * jo_kn - f * io_km + g * in_jm));
-
 }
 
 VALUE rb_matrix4x4_to_s(VALUE self) {
     MATRIX4X4();
     return rb_sprintf("{{%f, %f, %f, %f}, {%f, %f, %f, %f}, {%f, %f, %f, %f}, {%f, %f, %f, %f}}",
-        m->m11, m->m12, m->m13, m->m14, m->m21, m->m22, m->m23, m->m24,
-        m->m31, m->m32, m->m33, m->m34, m->m41, m->m42, m->m43, m->m44);
+                      m->m11, m->m12, m->m13, m->m14, m->m21, m->m22, m->m23, m->m24,
+                      m->m31, m->m32, m->m33, m->m34, m->m41, m->m42, m->m43, m->m44);
 }
 
 VALUE rb_matrix4x4_equal(VALUE self, VALUE other) {
@@ -311,9 +310,23 @@ VALUE rb_matrix4x4_equal(VALUE self, VALUE other) {
     Data_Get_Struct(self, Matrix4x4, m1);
     Data_Get_Struct(other, Matrix4x4, m2);
     return FLT_EQUAL(m1->m11, m2->m11) && FLT_EQUAL(m1->m12, m2->m12) && FLT_EQUAL(m1->m13, m2->m13) && FLT_EQUAL(m1->m14, m2->m14) &&
-           FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) && FLT_EQUAL(m1->m23, m2->m23) && FLT_EQUAL(m1->m24, m2->m24) &&
-           FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) && FLT_EQUAL(m1->m33, m2->m33) && FLT_EQUAL(m1->m34, m2->m34) &&
-           FLT_EQUAL(m1->m41, m2->m41) && FLT_EQUAL(m1->m42, m2->m42) && FLT_EQUAL(m1->m43, m2->m43) && FLT_EQUAL(m1->m44, m2->m44) ? Qtrue : Qfalse;
+                   FLT_EQUAL(m1->m21, m2->m21) && FLT_EQUAL(m1->m22, m2->m22) && FLT_EQUAL(m1->m23, m2->m23) && FLT_EQUAL(m1->m24, m2->m24) &&
+                   FLT_EQUAL(m1->m31, m2->m31) && FLT_EQUAL(m1->m32, m2->m32) && FLT_EQUAL(m1->m33, m2->m33) && FLT_EQUAL(m1->m34, m2->m34) &&
+                   FLT_EQUAL(m1->m41, m2->m41) && FLT_EQUAL(m1->m42, m2->m42) && FLT_EQUAL(m1->m43, m2->m43) && FLT_EQUAL(m1->m44, m2->m44)
+               ? Qtrue
+               : Qfalse;
+}
+
+VALUE rb_matrix4x4_pow(VALUE self, VALUE exponent) {
+    struct RData *rdata = RDATA(self);
+    const int count = 16;
+    float *result = ruby_xmalloc(sizeof(float) * count);
+    float *m = (float *)rdata->data;
+    float e = fabsf(NUM2FLT(exponent));
+    for (int i = 0; i < count; i++)
+        result[i] = powf(fabsf(m[i]), e);
+
+    return NUMERIX_WRAP(rdata->basic.klass, result);
 }
 
 VALUE rb_matrix4x4_to_a(VALUE self) {
@@ -354,34 +367,29 @@ VALUE rb_matrix4x4_row(VALUE self, VALUE row) {
     MATRIX4X4();
     VALUE args = rb_ary_new_capa(4);
     int r = NUM2INT(row);
-    switch (r)
-    {
-        case 0:
-        {
+    switch (r) {
+        case 0: {
             rb_ary_push(args, DBL2NUM(m->m11));
             rb_ary_push(args, DBL2NUM(m->m12));
             rb_ary_push(args, DBL2NUM(m->m13));
             rb_ary_push(args, DBL2NUM(m->m14));
             break;
         }
-        case 1:
-        {
+        case 1: {
             rb_ary_push(args, DBL2NUM(m->m21));
             rb_ary_push(args, DBL2NUM(m->m22));
             rb_ary_push(args, DBL2NUM(m->m23));
             rb_ary_push(args, DBL2NUM(m->m24));
             break;
         }
-        case 2:
-        {
+        case 2: {
             rb_ary_push(args, DBL2NUM(m->m31));
             rb_ary_push(args, DBL2NUM(m->m32));
             rb_ary_push(args, DBL2NUM(m->m33));
             rb_ary_push(args, DBL2NUM(m->m34));
             break;
         }
-        case 3:
-        {
+        case 3: {
             rb_ary_push(args, DBL2NUM(m->m41));
             rb_ary_push(args, DBL2NUM(m->m42));
             rb_ary_push(args, DBL2NUM(m->m43));
@@ -398,34 +406,29 @@ VALUE rb_matrix4x4_column(VALUE self, VALUE column) {
     MATRIX4X4();
     VALUE args = rb_ary_new_capa(4);
     int c = NUM2INT(column);
-    switch (c)
-    {
-        case 0:
-        {
+    switch (c) {
+        case 0: {
             rb_ary_push(args, DBL2NUM(m->m11));
             rb_ary_push(args, DBL2NUM(m->m21));
             rb_ary_push(args, DBL2NUM(m->m31));
             rb_ary_push(args, DBL2NUM(m->m41));
             break;
         }
-        case 1:
-        {
+        case 1: {
             rb_ary_push(args, DBL2NUM(m->m12));
             rb_ary_push(args, DBL2NUM(m->m22));
             rb_ary_push(args, DBL2NUM(m->m32));
             rb_ary_push(args, DBL2NUM(m->m42));
             break;
         }
-        case 2:
-        {
+        case 2: {
             rb_ary_push(args, DBL2NUM(m->m13));
             rb_ary_push(args, DBL2NUM(m->m23));
             rb_ary_push(args, DBL2NUM(m->m33));
             rb_ary_push(args, DBL2NUM(m->m43));
             break;
         }
-        case 3:
-        {
+        case 3: {
             rb_ary_push(args, DBL2NUM(m->m14));
             rb_ary_push(args, DBL2NUM(m->m24));
             rb_ary_push(args, DBL2NUM(m->m34));
@@ -436,6 +439,28 @@ VALUE rb_matrix4x4_column(VALUE self, VALUE column) {
             break;
     }
     return args;
+}
+
+VALUE rb_matrix4x4_map(VALUE self) {
+    const int count = 16;
+    struct RData *rdata = RDATA(self);
+    float *flt = (float *)rdata->data;
+    float *result = (float *)ruby_xmalloc(count * sizeof(float));
+
+    for (int i = 0; i < count; i++)
+        result[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
+
+    return NUMERIX_WRAP(rdata->basic.klass, result);
+}
+
+VALUE rb_matrix4x4_map_bang(VALUE self) {
+    const int count = 16;
+    float *flt = (float *)RDATA(self)->data;
+
+    for (int i = 0; i < count; i++)
+        flt[i] = NUM2FLT(rb_yield(DBL2NUM(flt[i])));
+
+    return self;
 }
 
 VALUE rb_matrix4x4_to_h(VALUE self) {
@@ -465,8 +490,7 @@ VALUE rb_matrix4x4_to_h(VALUE self) {
 
 VALUE rb_matrix4x4_each_row(VALUE self) {
     MATRIX4X4();
-    for (int i = 0; i < 4; i++)
-    {
+    for (int i = 0; i < 4; i++) {
         VALUE index = INT2NUM(i);
         rb_yield(rb_matrix4x4_row(self, index));
     }
@@ -475,8 +499,7 @@ VALUE rb_matrix4x4_each_row(VALUE self) {
 
 VALUE rb_matrix4x4_each_column(VALUE self) {
     MATRIX4X4();
-    for (int i = 0; i < 4; i++)
-    {
+    for (int i = 0; i < 4; i++) {
         VALUE index = INT2NUM(i);
         rb_yield(rb_matrix4x4_column(self, index));
     }
@@ -484,12 +507,9 @@ VALUE rb_matrix4x4_each_column(VALUE self) {
 }
 
 VALUE rb_matrix4x4_aref(int argc, VALUE *argv, VALUE self) {
-    if (argc == 1)
-    {
+    if (argc == 1) {
         return rb_call_super(1, argv);
-    }
-    else if (argc == 2)
-    {
+    } else if (argc == 2) {
         int r = NUM2INT(argv[0]);
         int c = NUM2INT(argv[1]);
         if (r < 0 || r > 3 || c < 0 || c > 3)
@@ -502,12 +522,9 @@ VALUE rb_matrix4x4_aref(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE rb_matrix4x4_aset(int argc, VALUE *argv, VALUE self) {
-    if (argc == 2)
-    {
-        return rb_call_super(2, argv); 
-    }
-    else if (argc == 3)
-    {
+    if (argc == 2) {
+        return rb_call_super(2, argv);
+    } else if (argc == 3) {
         int r = NUM2INT(argv[0]);
         int c = NUM2INT(argv[1]);
         if (r < 0 || r > 3 || c < 0 || c > 3)
@@ -516,7 +533,7 @@ VALUE rb_matrix4x4_aset(int argc, VALUE *argv, VALUE self) {
         return rb_call_super(2, &argv[1]);
     }
     rb_raise(rb_eArgError, "wrong number of arguments (%d for 2, 3)", argc);
-    return Qnil; 
+    return Qnil;
 }
 
 VALUE rb_matrix4x4_identity(VALUE klass) {
@@ -548,7 +565,7 @@ VALUE rb_matrix4x4_create_billboard(VALUE klass, VALUE position, VALUE camera, V
     Data_Get_Struct(up, Vector3, u);
     Data_Get_Struct(forward, Vector3, f);
 
-   Vector3 *axis = xmalloc(sizeof(Vector3) * 3);
+    Vector3 *axis = xmalloc(sizeof(Vector3) * 3);
 
     axis[2].x = pos->x - cam->x;
     axis[2].y = pos->y - cam->y;
@@ -556,14 +573,11 @@ VALUE rb_matrix4x4_create_billboard(VALUE klass, VALUE position, VALUE camera, V
 
     float norm = axis[2].x * axis[2].x + axis[2].y * axis[2].y + axis[2].z * axis[2].z;
 
-    if (norm < epsilon)
-    {
+    if (norm < epsilon) {
         axis[2].x = -f->x;
         axis[2].y = -f->y;
         axis[2].z = -f->z;
-    }
-    else
-    {
+    } else {
         float inverseNorm = 1.0f / sqrtf(norm);
         axis[2].x *= inverseNorm;
         axis[2].y *= inverseNorm;
@@ -600,7 +614,7 @@ VALUE rb_matrix4x4_create_billboard(VALUE klass, VALUE position, VALUE camera, V
 
 VALUE rb_matrix4x4_create_constrained_billboard(VALUE klass, VALUE position, VALUE rotate, VALUE camera, VALUE up, VALUE forward) {
     const float epsilon = 1e-4f;
-    const float minAngle = 1.0f - (0.1f * (NUMERIX_PI / 180.0f)); // 0.1 degrees
+    const float minAngle = 1.0f - (0.1f * (NUMERIX_PI / 180.0f));  // 0.1 degrees
 
     Vector3 *pos, *cam, *r, *u, *f;
     Data_Get_Struct(position, Vector3, pos);
@@ -617,14 +631,11 @@ VALUE rb_matrix4x4_create_constrained_billboard(VALUE klass, VALUE position, VAL
     faceDir->z = pos->z - cam->z;
 
     float norm = faceDir->x * faceDir->x + faceDir->y * faceDir->y + faceDir->z * faceDir->z;
-    if (norm < epsilon)
-    {
+    if (norm < epsilon) {
         faceDir->x = -f->x;
         faceDir->y = -f->y;
         faceDir->z = -f->z;
-    }
-    else
-    {
+    } else {
         float invNorm = 1.0f / sqrtf(norm);
         faceDir->x *= invNorm;
         faceDir->y *= invNorm;
@@ -634,31 +645,24 @@ VALUE rb_matrix4x4_create_constrained_billboard(VALUE klass, VALUE position, VAL
     // Treat the case when angle between faceDir and rotateAxis is too close to 0.
     float dot = numerix_vec3_dot(r, faceDir);
 
-    if (fabsf(dot) > minAngle)
-    {
+    if (fabsf(dot) > minAngle) {
         memcpy(&axis[2], f, sizeof(Vector2));
         // Make sure passed values are useful for compute.
         dot = numerix_vec3_dot(r, &axis[2]);
 
-        if (fabsf(dot) > minAngle)
-        {
+        if (fabsf(dot) > minAngle) {
             axis[2].y = 0.0f;
-            if (fabsf(r->z) > minAngle)
-            {
+            if (fabsf(r->z) > minAngle) {
                 axis[2].x = 1.0f;
                 axis[2].z = 0.0f;
-            }
-            else
-            {
+            } else {
                 axis[2].x = 0.0f;
                 axis[2].z = -1.0f;
             }
         }
         numerix_cross_norm(r, &axis[2], &axis[0]);
         numerix_cross_norm(&axis[0], r, &axis[2]);
-    }
-    else
-    {
+    } else {
         numerix_cross_norm(r, faceDir, &axis[0]);
         numerix_cross_norm(&axis[0], &axis[1], &axis[2]);
     }
@@ -691,21 +695,17 @@ VALUE rb_matrix4x4_create_constrained_billboard(VALUE klass, VALUE position, VAL
 
 VALUE rb_matrix4x4_create_translation(int argc, VALUE *argv, VALUE klass) {
     float x, y, z;
-    if (argc == 1)
-    {
-        Vector3 *v; 
+    if (argc == 1) {
+        Vector3 *v;
         Data_Get_Struct(argv[0], Vector3, v);
         x = v->x;
         y = v->y;
         z = v->z;
-    }
-    else if (argc == 3)
-    {
+    } else if (argc == 3) {
         x = NUM2FLT(argv[0]);
         y = NUM2FLT(argv[1]);
         z = NUM2FLT(argv[2]);
-    }
-    else
+    } else
         rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 3)", argc);
 
     Matrix4x4 *result = ALLOC(Matrix4x4);
@@ -733,37 +733,32 @@ VALUE rb_matrix4x4_create_translation(int argc, VALUE *argv, VALUE klass) {
 VALUE rb_matrix4x4_create_scale(int argc, VALUE *argv, VALUE klass) {
     float xscale, yscale, zscale, tx = 0.0f, ty = 0.0f, tz = 0.0f;
 
-    switch (argc)
-    {
-        case 1:
-        {
-            if (NUMERIX_TYPE_P(argv[0], rb_cVector3)) // (vec3)
+    switch (argc) {
+        case 1: {
+            if (NUMERIX_TYPE_P(argv[0], rb_cVector3))  // (vec3)
             {
                 Vector3 *vec3;
                 Data_Get_Struct(argv[0], Vector3, vec3);
                 xscale = vec3->x;
                 yscale = vec3->y;
                 zscale = vec3->z;
-            }
-            else   // (float)
+            } else  // (float)
             {
                 xscale = yscale = zscale = NUM2FLT(argv[0]);
             }
             break;
         }
-        case 2:
-        {
+        case 2: {
             Vector3 *cp;
             Data_Get_Struct(argv[1], Vector3, cp);
-            if (NUMERIX_TYPE_P(argv[0], rb_cVector3)) // (vec3, vec3)
+            if (NUMERIX_TYPE_P(argv[0], rb_cVector3))  // (vec3, vec3)
             {
                 Vector3 *v3;
                 Data_Get_Struct(argv[1], Vector3, v3);
                 xscale = v3->x;
                 yscale = v3->y;
                 zscale = v3->z;
-            }
-            else // (float, vec3)
+            } else  // (float, vec3)
             {
                 xscale = yscale = zscale = NUM2FLT(argv[0]);
             }
@@ -772,14 +767,14 @@ VALUE rb_matrix4x4_create_scale(int argc, VALUE *argv, VALUE klass) {
             tz = cp->z * (1.0f - zscale);
             break;
         }
-        case 3: // (float, float, float)
+        case 3:  // (float, float, float)
         {
             xscale = NUM2FLT(argv[0]);
             yscale = NUM2FLT(argv[1]);
             zscale = NUM2FLT(argv[2]);
             break;
         }
-        case 4: // (float, float, float, vec3)
+        case 4:  // (float, float, float, vec3)
         {
             xscale = NUM2FLT(argv[0]);
             yscale = NUM2FLT(argv[1]);
@@ -791,8 +786,7 @@ VALUE rb_matrix4x4_create_scale(int argc, VALUE *argv, VALUE klass) {
             tz = center->z * (1.0f - zscale);
             break;
         }
-        default:
-        {
+        default: {
             rb_raise(rb_eArgError, "wrong number of arguments (given %d, expected 1, 2, 3, 4)", argc);
             break;
         }
@@ -826,8 +820,7 @@ VALUE rb_matrix4x4_create_rotation_x(int argc, VALUE *argv, VALUE klass) {
     float c = cosf(radians);
     float s = sinf(radians);
     float y = 0.0f, z = 0.0f;
-    if (argc == 2)
-    {
+    if (argc == 2) {
         Vector3 *center;
         Data_Get_Struct(argv[1], Vector3, center);
         y = center->y * (1.0f - c) + center->z * s;
@@ -867,8 +860,7 @@ VALUE rb_matrix4x4_create_rotation_y(int argc, VALUE *argv, VALUE klass) {
     float c = cosf(radians);
     float s = sinf(radians);
     float x = 0.0f, z = 0.0f;
-    if (argc == 2)
-    {
+    if (argc == 2) {
         Vector3 *center;
         Data_Get_Struct(argv[1], Vector3, center);
         x = center->x * (1.0f - c) - center->z * s;
@@ -908,8 +900,7 @@ VALUE rb_matrix4x4_create_rotation_z(int argc, VALUE *argv, VALUE klass) {
     float c = cosf(radians);
     float s = sinf(radians);
     float x = 0.0f, y = 0.0f;
-    if (argc == 2)
-    {
+    if (argc == 2) {
         Vector3 *center;
         Data_Get_Struct(argv[1], Vector3, center);
         x = center->x * (1.0f - c) + center->y * s;
@@ -1031,7 +1022,7 @@ VALUE rb_matrix4x4_create_perspective_fov(VALUE klass, VALUE fieldOfView, VALUE 
 
     result->m41 = result->m42 = result->m44 = 0.0f;
     result->m43 = n * f / (n - f);
- 
+
     return NUMERIX_WRAP(klass, result);
 }
 
@@ -1062,7 +1053,6 @@ VALUE rb_matrix4x4_create_perspective(VALUE klass, VALUE width, VALUE height, VA
 
     result->m41 = result->m42 = result->m44 = 0.0f;
     result->m43 = n * f / (n - f);
- 
 
     return NUMERIX_WRAP(klass, result);
 }
@@ -1101,7 +1091,6 @@ VALUE rb_matrix4x4_create_perspective_off_center(VALUE klass, VALUE left, VALUE 
 }
 
 VALUE rb_matrix4x4_create_orthographic(VALUE klass, VALUE width, VALUE height, VALUE zNearPlane, VALUE zFarPlane) {
-
     float n = NUM2FLT(zNearPlane);
     float f = NUM2FLT(zFarPlane);
 
@@ -1120,7 +1109,7 @@ VALUE rb_matrix4x4_create_orthographic(VALUE klass, VALUE width, VALUE height, V
     result->m43 = n / (n - f);
     result->m44 = 1.0f;
 
-    return NUMERIX_WRAP(klass, result);  
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix4x4_create_orthographic_off_center(VALUE klass, VALUE left, VALUE right, VALUE bottom, VALUE top, VALUE zNearPlane, VALUE zFarPlane) {
@@ -1146,11 +1135,10 @@ VALUE rb_matrix4x4_create_orthographic_off_center(VALUE klass, VALUE left, VALUE
     result->m43 = n / (n - f);
     result->m44 = 1.0f;
 
-    return NUMERIX_WRAP(klass, result);  
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix4x4_create_look_at(VALUE klass, VALUE camPos, VALUE camTarget, VALUE camUp) {
-
     Vector3 *cam, *target, *up;
     Data_Get_Struct(camPos, Vector3, cam);
     Data_Get_Struct(camTarget, Vector3, target);
@@ -1186,7 +1174,7 @@ VALUE rb_matrix4x4_create_look_at(VALUE klass, VALUE camPos, VALUE camTarget, VA
 
     xfree(axis);
 
-    return NUMERIX_WRAP(klass, result);  
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix4x4_create_world(VALUE klass, VALUE position, VALUE forward, VALUE up) {
@@ -1225,7 +1213,7 @@ VALUE rb_matrix4x4_create_world(VALUE klass, VALUE position, VALUE forward, VALU
 
     xfree(axis);
 
-    return NUMERIX_WRAP(klass, result); 
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix4x4_from_quaternion(VALUE klass, VALUE quaternion) {
@@ -1262,7 +1250,7 @@ VALUE rb_matrix4x4_from_quaternion(VALUE klass, VALUE quaternion) {
     result->m43 = 0.0f;
     result->m44 = 1.0f;
 
-    return NUMERIX_WRAP(klass, result); 
+    return NUMERIX_WRAP(klass, result);
 }
 
 VALUE rb_matrix4x4_from_yaw_pitch_roll(VALUE klass, VALUE yaw, VALUE pitch, VALUE roll) {
@@ -1277,7 +1265,7 @@ VALUE rb_matrix4x4_create_shadow(VALUE klass, VALUE lightDir, VALUE plane) {
     VALUE normPlane = rb_plane_normalize(plane);
     Plane *p;
     Data_Get_Struct(normPlane, Plane, p);
-    
+
     float dot = p->normal.x * light->x + p->normal.y * light->y + p->normal.z * light->z;
     float a = -p->normal.x;
     float b = -p->normal.y;
@@ -1607,8 +1595,7 @@ VALUE rb_matrix4x4_multiply(VALUE self, VALUE other) {
     Data_Get_Struct(self, Matrix4x4, m1);
     result = ALLOC(Matrix4x4);
 
-    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4))
-    {
+    if (NUMERIX_TYPE_P(other, rb_cMatrix4x4)) {
         Matrix4x4 *m2;
         Data_Get_Struct(other, Matrix4x4, m2);
 
@@ -1635,9 +1622,7 @@ VALUE rb_matrix4x4_multiply(VALUE self, VALUE other) {
         result->m42 = m1->m41 * m2->m12 + m1->m42 * m2->m22 + m1->m43 * m2->m32 + m1->m44 * m2->m42;
         result->m43 = m1->m41 * m2->m13 + m1->m42 * m2->m23 + m1->m43 * m2->m33 + m1->m44 * m2->m43;
         result->m44 = m1->m41 * m2->m14 + m1->m42 * m2->m24 + m1->m43 * m2->m34 + m1->m44 * m2->m44;
-    }
-    else
-    {
+    } else {
         float scalar = NUM2FLT(other);
         result->m11 = m1->m11 * scalar;
         result->m12 = m1->m12 * scalar;
@@ -1667,7 +1652,7 @@ VALUE rb_matrix4x4_invert(VALUE self) {
     //                                       -1
     // If you have matrix M, inverse Matrix M   can compute
     //
-    //     -1       1      
+    //     -1       1
     //    M   = --------- A
     //            det(M)
     //
@@ -1775,15 +1760,12 @@ VALUE rb_matrix4x4_invert(VALUE self) {
 
     float det = a * a11 + b * a12 + c * a13 + d * a14;
 
-    if (fabsf(det) < FLT_EPSILON)
-    {
+    if (fabsf(det) < FLT_EPSILON) {
         // invalid
-        float *matp = (float*) mat;
+        float *matp = (float *)mat;
         for (int i = 0; i < 16; i++)
             matp[i] = NAN;
-    }
-    else
-    {
+    } else {
         float invDet = 1.0f / det;
 
         result->m11 = a11 * invDet;

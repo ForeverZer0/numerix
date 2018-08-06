@@ -31,6 +31,7 @@ VALUE rb_vector3_transform(VALUE self, VALUE other);
 VALUE rb_vector3_transform_bang(VALUE self, VALUE other);
 VALUE rb_vector3_abs(VALUE self);
 VALUE rb_vector3_sqrt(VALUE self);
+VALUE rb_vector3_pow(VALUE self, VALUE exponent);
 VALUE rb_vector3_dot(VALUE self, VALUE other);
 VALUE rb_vector3_clamp(VALUE self, VALUE min, VALUE max);
 VALUE rb_vector3_clamp_bang(VALUE self, VALUE min, VALUE max);
@@ -41,6 +42,8 @@ VALUE rb_vector3_reflect_bang(VALUE self, VALUE other);
 VALUE rb_vector3_angle(VALUE self, VALUE other);
 VALUE rb_vector3_transform_normal(VALUE self, VALUE matrix);
 VALUE rb_vector3_transform_normal_bang(VALUE self, VALUE matrix);
+VALUE rb_vector3_map(VALUE self);
+VALUE rb_vector3_map_bang(VALUE self);
 
 // Conversion
 VALUE rb_vector3_to_s(VALUE self);
