@@ -3,6 +3,9 @@ module Numerix
 
   ##
   # @abstract Abstract class providing common functionality to the base classes.
+  #
+  # This class cannot be instantiated, it of only for providing a common base
+  # class for all Numerix types and provide common functionality.
   class Structure
 
     private_class_method :new
@@ -83,9 +86,12 @@ module Numerix
       require 'fiddle'
 
       ##
-      # @note This method only exists in Ruby 2.0 and higher.
+      # @note This method only exists in Ruby 2.0 and higher, and will not be
+      #   present in lower versions.
       #
       # @return [Fiddle::Pointer] a sized pointer to the structure in memory.
+      #
+      # @see address
       def ptr
       end
     end

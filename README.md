@@ -7,6 +7,7 @@ The vector and matrix classes that are part of Ruby's standard library are imple
 
 Great care has been take to make the library "interop" friendly, where each class can easily be passed as a "pointer" or binary string for interop with native libraries, using Ruby's `Fiddle`, FFI, or even Ruby's legacy `Win32API`. Numerix has been built from the ground-up for Ruby, not playing middle-man between Ruby and an existing library, and is optimized specifically for it, with focus on speed and a robust collection of functionality.
 
+This is my first publicly released C extension for Ruby, and I welcome bug reports of any kind, in addition to feature requests, and ALL constructive feedback. Please don't hesitate to report any issues [on GitHub](https://github.com/ForeverZer0/numerix/issues)!
 
 ## Installation
 
@@ -38,21 +39,19 @@ The following base classes are implemented completeley, and all work together to
 * **Plane** - A structure encapsulating a 3D plane (Vector3 denoting _normal_ and a float for _distance_)
 * **Quaternion** - A structure encapsulating four single precision floating point values (_x, y, z, w_)
 
-For each method (where applicable), there is typically a static singleton, instance, and "impure" instance variation that alters the object's state. All of the impure methods follow the standard Ruby convention of being suffixed with a `!`.
+In addition to the "core" classes, there is a basic `Vector` class that is an analog to the standard library's `Vector` class, but implemented in `C`. This class allows for arbitrary sized vectors same as its Ruby analog, but is not as optmized or feature-rich as is possible with the fixed-size vector classes.  
+
+For each method (where applicable), there is typically a standard "pure" method, and "impure" variation that alters the object's state. All of the impure methods follow the standard Ruby convention of being suffixed with a `!`.
 
 ```ruby
 # Create a vector with 3 elements
-vec3 = Numerix::Vector3.new(5.0, 4.0, 9.0)
+vec3 = Vector3.new(5.0, 4.0, 9.0)
 
-# Create a normalized vector from it with a static method
-norm = Numerix::Vector3.normalize(vec3)
-
-# Create a normalized vector from it with an instance method
 norm = vec3.normalize
-
-# Alter the state of the existing vector without creating new instance
 vec3.normalize!
 ```
+
+There is a host of methods available for each class, which are outlined in detail within the documentation, and excompass all that would be expected of any vector/matrix library, and additionally many "helper" functions to efficiently perform many common and less-common operations. All of these functions are implemented the "Ruby-way", following standard Ruby style and syntax.
 
 ## Contributing
 

@@ -110,6 +110,50 @@ module Numerix
     end
 
     ##
+    # The equivalent of `Enumerable#map`, but returns a matrix object instead of
+    # an Array.
+    #
+    # Invokes the given block once for each element of `self`.
+    #
+    # Creates a new matrix containing the values returned by the block.
+    #
+    # @yield [component] Yields a component of the matrix to the block.
+    # @yieldparam component [Float] The yielded component.
+    #
+    # @return [Matrix4x4]
+    #
+    # @see map!
+    def map
+    end
+
+    ##
+    # Invokes the given block once for each element of self, replacing the
+    # element with the value returned by the block.
+    #
+    # The values of the matrix are altered without creating a ne object.
+    #
+    # @yield [component] Yields a component of the matrix to the block.
+    # @yieldparam component [Float] The yielded component.
+    #
+    # @return [self]
+    #
+    # @see map
+    def map!
+    end
+
+    alias_method :collect, :map
+    alias_method :collect!, :map!
+
+    ##
+    # Raises the matrix to the given power.
+    #
+    # @param exponent [Float] The power to raise the matrix to.
+    #
+    # @return [Matrix4x4] New matrix that is result of the operation.
+    def **(exponent)
+    end
+
+    ##
     # @return [Boolean] `true` if the matrix is the identity matrix, otherwise
     #   `false`.
     def identity?

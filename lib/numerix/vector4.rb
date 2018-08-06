@@ -59,7 +59,7 @@ module Numerix
     def initialize(*args)
     end
 
-      ##
+    ##
     # The equivalent of `Enumerable#map`, but returns a vector object instead of
     # an Array.
     #
