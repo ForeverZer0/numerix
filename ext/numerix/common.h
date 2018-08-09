@@ -18,6 +18,10 @@
 
 #define CLASS_NAME(obj) rb_class2name(CLASS_OF(obj))
 
+#ifndef FLT_EPSILON
+#define FLT_EPSILON 1.19209290E-07F
+#endif
+
 #define FLT_EQUAL(a, b) fabsf(a - b) < FLT_EPSILON
 
 #define PRIVATE_CLASS_METHOD(klass, methodName) rb_funcall(klass, rb_intern("private_class_method"), 1, ID2SYM(rb_intern(methodName)))

@@ -277,7 +277,6 @@ VALUE rb_matrix3x2_column(VALUE self, VALUE column) {
 
 VALUE rb_matrix3x2_map(VALUE self) {
     const int count = 6;
-    RETURN_SIZED_ENUMERATOR(self, 0, 0, count);
 
     struct RData *rdata = RDATA(self);
     float *flt = (float *)rdata->data;
@@ -291,7 +290,6 @@ VALUE rb_matrix3x2_map(VALUE self) {
 
 VALUE rb_matrix3x2_map_bang(VALUE self) {
     const int count = 6;
-    RETURN_SIZED_ENUMERATOR(self, 0, 0, count);
 
     float *flt = (float *)RDATA(self)->data;
     for (int i = 0; i < count; i++)

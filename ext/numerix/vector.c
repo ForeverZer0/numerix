@@ -230,7 +230,7 @@ VALUE rb_basic_vector_address(VALUE self) {
 #if (SIZEOF_INTPTR_T == 4)
     return LONG2NUM((long)v->values);
 #elif (SIZEOF_INTPTR_T == 8)
-    return LL2NUM((long long)v->values)
+    return LL2NUM((long long)v->values);
 #else
     return INT2NUM(0);
 #endif
@@ -262,7 +262,7 @@ VALUE rb_basic_vector_aset(VALUE self, VALUE index, VALUE value) {
 
 VALUE rb_basic_vector_each(VALUE self) {
     BASIC_VECTOR();
-    int count = v->count;
+    long int count = v->count;
 
     volatile VALUE vector = self;
     RETURN_SIZED_ENUMERATOR(vector, 0, 0, count);
